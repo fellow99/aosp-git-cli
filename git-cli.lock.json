@@ -1,0 +1,53 @@
+{
+  "$comment": "git-cli single source of truth: version = upstream git version (independent semver). Binaries are NOT committed; CI builds libgit_cli.so and tools/provision.mjs deploys it. The current entry is a DRAFT placeholder: size/sha256 are pinned by the first real CI build. See docs/000-工程规划.md.",
+  "active": {
+    "version": "2.51.0",
+    "abi": "arm64-v8a"
+  },
+  "releases": [
+    {
+      "version": "2.51.0",
+      "abi": "arm64-v8a",
+      "androidApi": 24,
+      "name": "libgit_cli.so",
+      "size": 0,
+      "sha256": "",
+      "builtFrom": {
+        "source": "git-<ver>.tar.gz (github.com/git/git), unmodified; NDK cross-compile",
+        "deps": "zlib / libcurl / OpenSSL statically linked (https transport); NO_TCLTK / NO_GETTEXT / NO_ICONV / NO_REGEX (bionic gaps covered by bundled compat)",
+        "assets": "git templates + CA bundle shipped as AAR assets",
+        "ndk": "TBD (first CI build pins NDK line + version)",
+        "flags": "TBD: -Wl,-z,max-page-size=16384; llvm-strip --strip-unneeded"
+      },
+      "gates": {
+        "eTypeEtDyn": true,
+        "ptInterpSystemLinker": true,
+        "eMachineAArch64": true,
+        "neededWhitelist": true,
+        "sha256Match": true,
+        "sizeMatch": true,
+        "pageAlign16k": true
+      },
+      "mavenCentral": {
+        "coordinates": "io.github.fellow99:git-cli:2.51.0",
+        "published": false
+      },
+      "status": "draft"
+    }
+  ],
+  "matrix": {
+    "minSdk": 24,
+    "abi": [
+      "arm64-v8a"
+    ],
+    "allowedNeeded": [
+      "libc.so",
+      "libm.so",
+      "libdl.so",
+      "libz.so",
+      "liblog.so"
+    ],
+    "execPackaging": "useLegacyPackaging=true (extractNativeLibs=true): exec requires physical files in nativeLibraryDir; targetSdk>=29 SELinux forbids exec from app data dirs",
+    "note": "Exec-form tool; https remotes need the bundled CA bundle injected via env (SSL_CERT_FILE / GIT_CONFIG); ssh remotes need a separate ssh binary (out of scope here). No pairing with other repos: version = git upstream version."
+  }
+}
