@@ -1,35 +1,71 @@
 {
   "$comment": "git-cli single source of truth: version = upstream git version (independent semver). Binaries are NOT committed; CI builds libgit_cli.so and tools/provision.mjs deploys it. The current entry is a DRAFT placeholder: size/sha256 are pinned by the first real CI build. See docs/000-工程规划.md.",
   "active": {
-    "version": "2.51.0",
+    "version": "2.56.0",
     "abi": "arm64-v8a"
   },
   "releases": [
     {
-      "version": "2.51.0",
+      "version": "2.56.0",
       "abi": "arm64-v8a",
       "androidApi": 24,
       "name": "libgit_cli.so",
       "size": 0,
       "sha256": "",
       "builtFrom": {
-        "source": "git-<ver>.tar.gz (github.com/git/git), unmodified; NDK cross-compile",
-        "deps": "zlib / libcurl / OpenSSL statically linked (https transport); NO_TCLTK / NO_GETTEXT / NO_ICONV / NO_REGEX (bionic gaps covered by bundled compat)",
-        "assets": "git templates + CA bundle shipped as AAR assets",
+        "source": {
+          "version": "2.56.0",
+          "url": "https://www.kernel.org/pub/software/scm/git/git-2.56.0.tar.gz",
+          "sha256": "826817fd3671b8565586d6d49f688298de8354ab11db829c02720e5c74b9b39f",
+          "note": "unmodified official tarball (kernel.org); NDK cross-compile"
+        },
+        "deps": {
+          "zlib": {
+            "version": "1.3.1",
+            "sha256": "9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23",
+            "url": "https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz (official; sha256 matches zlib.net)"
+          },
+          "openssl": {
+            "version": "3.5.9",
+            "sha256": "603f5602e2eef00d77fbd429d34dcd5822bb301757a1bc9cdb24c670f1eb859a",
+            "url": "https://github.com/openssl/openssl/releases/download/openssl-3.5.9/openssl-3.5.9.tar.gz"
+          },
+          "curl": {
+            "version": "8.23.0",
+            "sha256": "8dadd7d2536a314f982ad05a651b713f426bf7d02cc2c76cffb9796f2218e6c5",
+            "url": "https://curl.se/download/curl-8.23.0.tar.xz"
+          }
+        },
+        "assets": "git templates (source tree) + cacert.pem 2026-10-20 (sha256 796f1389bfea13c0ed78f663b765baaff54a508e5483786bd6ece73c5e3e3cbe) + gitexec-manifest.json",
         "ndk": "TBD (first CI build pins NDK line + version)",
-        "flags": "TBD: -Wl,-z,max-page-size=16384; llvm-strip --strip-unneeded"
+        "flags": "TBD: -Wl,-z,max-page-size=16384; llvm-strip --strip-unneeded",
+        "helpers": {
+          "libgit_remote_curl.so": {
+            "farm": [
+              "git-remote-http",
+              "git-remote-https"
+            ],
+            "sha256": "",
+            "size": 0
+          }
+        },
+        "helperTrimmed": [
+          "libgit_http_fetch.so",
+          "libgit_http_push.so"
+        ]
       },
       "gates": {
-        "eTypeEtDyn": true,
-        "ptInterpSystemLinker": true,
-        "eMachineAArch64": true,
-        "neededWhitelist": true,
-        "sha256Match": true,
-        "sizeMatch": true,
-        "pageAlign16k": true
+        "$comment": "门禁结论存档：provision 不读取本字段（每次解析产物判定）；draft 初值 false（C6 未实测不当事实），构建过门禁后回写 true",
+        "eTypeEtDyn": false,
+        "ptInterpSystemLinker": false,
+        "eMachineAArch64": false,
+        "neededWhitelist": false,
+        "sha256Match": false,
+        "sizeMatch": false,
+        "pageAlign16k": false
       },
       "mavenCentral": {
-        "coordinates": "io.github.fellow99:git-cli:2.51.0",
+        "coordinates": "io.github.fellow99:git-cli:2.56.0",
         "published": false
       },
       "status": "draft"
@@ -48,6 +84,12 @@
       "liblog.so"
     ],
     "execPackaging": "useLegacyPackaging=true (extractNativeLibs=true): exec requires physical files in nativeLibraryDir; targetSdk>=29 SELinux forbids exec from app data dirs",
-    "note": "Exec-form tool; https remotes need the bundled CA bundle injected via env (SSL_CERT_FILE / GIT_CONFIG); ssh remotes need a separate ssh binary (out of scope here). No pairing with other repos: version = git upstream version."
+    "note": "Exec-form tool; https remotes need the bundled CA bundle injected via env (SSL_CERT_FILE / GIT_CONFIG); ssh remotes need a separate ssh binary (out of scope here). No pairing with other repos: version = git upstream version.",
+    "jniLibsWhitelist": [
+      "libgit_cli.so",
+      "libgit_remote_curl.so"
+    ],
+    "helperExempt": [],
+    "gitexecManifest": "assets/git-bridge-tools/gitexec-manifest.json (farm: name -> physical lib; built by 001 S8, consistency checked by provision)"
   }
 }

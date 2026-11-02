@@ -1,24 +1,49 @@
-name: CI (scaffold) — aosp-git-cli
+name: CI — aosp-git-cli (git-cli android arm64)
 
-# 000-scaffold 阶段的 CI 只做「配置期门禁」：
-#   - Gradle 配置/任务求值（无 .so 也必须通过 —— FR：二进制缺失不阻碍配置期）
-#   - provision.mjs 语法与退出码纪律自检（未投放 = 退出码 2 = 预期）
-# 真实的交叉编译 + 门禁 + Release 流水线在 M1 接入（替换本文件）。
+# 002-building-workflow（M1-T6）：真实流水线 —— fetch 五输入钉选 → 静态依赖 → git 交叉编译
+# → helper 探明 → strip → provision 全门禁 → 归档（含 GPLv2 对应源码，C7/D7）→ [tag] Release → lock 回写提示。
+# 触发矩阵（FR-002-014/016）：push(main)/PR = 构建门禁（无 Release）；tag v<gitver> / dispatch = + Release。
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      gitVersion:
+        description: 'git version to build (must match lock.active.version)'
+        required: false
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NDK_VERSION: 28.2.13676358
+  GIT_VERSION: 2.56.0
+
 jobs:
-  config-check:
+  build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 90
+    permissions:
+      contents: write   # tag 触发时创建 Release（非 tag 无 release 步骤，见 if:）
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve version（tag/dispatch 与 lock active 一致性，FR-002-014）
+        run: |
+          LOCK_VER="$(node -e "console.log(require('./git-cli.lock.json').active.version)")"
+          TAG_VER="${GITHUB_REF_NAME#v}"
+          IN_VER="${{ github.event.inputs.gitVersion }}"
+          WANT="${IN_VER:-$TAG_VER}"
+          if [ -n "$WANT" ] && [ "$WANT" != "$LOCK_VER" ]; then
+            echo "版本不一致：触发=$WANT vs lock=$LOCK_VER（改 lock 再打 tag，C2）"; exit 1
+          fi
+          echo "GIT_VERSION=$LOCK_VER" >> "$GITHUB_ENV"
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -31,20 +56,125 @@ jobs:
         with:
           gradle-version: '9.4.1'
 
-      - name: Gradle configuration gate（无 .so 必须可配置）
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install host build deps（make/gcc/perl/tar/xz；autoconf 可选——config.mak 兜底）
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends make gcc perl tar xz-utils file ccache
+          # autoconf 不强制：git 走 config.mak 直写路线（001 plan §3.3）
+
+      - name: Set up Android NDK ${{ env.NDK_VERSION }}
+        uses: android-actions/setup-android@v3
+      - run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}" >/dev/null
+      - run: echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/${{ env.NDK_VERSION }}" >> "$GITHUB_ENV"
+
+      - name: 配置期门禁（无 .so 必须可配置；FR-002-020 不回归）
         run: gradle :git-cli:tasks --console=plain
 
-      - name: provision.mjs syntax + exit-code discipline
+      - name: 语法门（全部脚本；FR-002-021）
         run: |
           node --check tools/provision.mjs
-          # 未投放产物时 --check 的预期退出码是 2（未投放），其它非零码视为工具缺陷。
-          node tools/provision.mjs --check
-          code=$?
-          if [ "$code" -ne 2 ]; then
-            echo "provision --check 退出码=$code（预期 2=未投放）"; exit 1
-          fi
-
-      - name: scripts syntax
-        run: |
           node --check scripts/fetch-git-cli-source.mjs
           bash -n scripts/build-git-cli-android.sh
+          bash -n scripts/test-on-device/run-probes.sh
+
+      - name: provision 退出码纪律（断言语义修复版，FR-002-012；000-scaffold plan §7.0 关闭）
+        run: |
+          code=0
+          node tools/provision.mjs --check || code=$?
+          if [ "$code" -ne 2 ]; then
+            echo "provision --check 退出码=$code（预期 2=未投放；1=工具缺陷须修）"
+            exit 1
+          fi
+          echo "✔ 未投放语义 = 2（预期）"
+
+      - name: Cache 五输入下载 + 依赖 .a
+        uses: actions/cache@v4
+        with:
+          path: |
+            .dist/dl
+            build/out/deps
+          key: dist-${{ env.GIT_VERSION }}-${{ hashFiles('scripts/fetch-git-cli-source.mjs') }}
+
+      - name: fetch 五输入（钉选 + sha256，FR-001-001~006）
+        run: node scripts/fetch-git-cli-source.mjs --git "$GIT_VERSION"
+
+      - name: build（zlib→openssl→curl→git 交叉编译 + helper 探明 + strip + assets）
+        run: |
+          bash scripts/build-git-cli-android.sh \
+            --git "$GIT_VERSION" --api 24 \
+            --src .dist/src --deps .dist/src \
+            --ndk "$ANDROID_NDK_HOME" --out build/out -j "$(nproc)"
+
+      - name: provision 七门禁（主 + helper 全集逐个 --inspect，FR-002-001）
+        run: |
+          fail=0
+          for so in build/out/jni/*.so; do
+            echo "── inspect $so"
+            node tools/provision.mjs --inspect "$so" || fail=1
+          done
+          exit $fail
+
+      - name: provision 投放（jniLibs 白名单全集 + assets 纯数据，FR-002-002~004）
+        run: |
+          node tools/provision.mjs --out git-cli/src/main/jniLibs --from build/out/jni
+          node tools/provision.mjs --assets build/out/assets/git-bridge-tools
+          node tools/provision.mjs --check
+
+      - name: AAR 组装
+        run: gradle :git-cli:assembleRelease --console=plain
+
+      - name: 归档（含 GPLv2 对应源码四源 tarball + 构建脚本，C7/D7/FR-002-013）
+        run: |
+          VER="$GIT_VERSION"
+          STAGE="git-cli-v${VER}-android-arm64-v8a"
+          mkdir -p "dist-archive/$STAGE"
+          cp build/out/jni/*.so "dist-archive/$STAGE/"
+          cp -r build/out/assets "dist-archive/$STAGE/assets"
+          cp build/out/BUILD-METADATA.txt .dist/FETCH-METADATA.json "dist-archive/$STAGE/" 2>/dev/null || true
+          cp build/out/helper-inventory.json "dist-archive/$STAGE/" 2>/dev/null || true
+          cp LICENSE git-cli/THIRD-PARTY-NOTICES.md "dist-archive/$STAGE/"
+          mkdir -p "dist-archive/$STAGE/corresponding-source"
+          cp .dist/dl/git-*.tar.gz .dist/dl/zlib-*.tar.gz .dist/dl/openssl-*.tar.gz .dist/dl/curl-*.tar.* \
+             "dist-archive/$STAGE/corresponding-source/"
+          cp scripts/fetch-git-cli-source.mjs scripts/build-git-cli-android.sh "dist-archive/$STAGE/corresponding-source/"
+          # GPLv2 对应源码义务说明（R5 措辞，M1-T6 定稿 ⬜；先以 notice 占位并如实标注）
+          cat > "dist-archive/$STAGE/corresponding-source/CORRESPONDING-SOURCE.txt" <<EOF
+          git is GPLv2. The corresponding source for the binaries in this archive is the
+          exact upstream tarballs included here (git/zlib/curl/openssl) plus the build
+          scripts (fetch/build). SHA-256 of each input is recorded in FETCH-METADATA.json.
+          EOF
+          tar -czf "dist-archive/${STAGE}.tar.gz" -C dist-archive "$STAGE"
+          ( cd dist-archive && sha256sum "${STAGE}.tar.gz" > "${STAGE}.tar.gz.sha256" )
+          cp git-cli/build/outputs/aar/git-cli-release.aar "dist-archive/${STAGE}-aar.aar" 2>/dev/null || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: git-cli-dist
+          path: dist-archive/
+
+      - name: lock 回写提示（draft→released 由维护者核验后提交，C2 单向；FR-002-015）
+        if: github.ref_type == 'tag'
+        run: |
+          echo "## lock 回写清单（人工核验后提交）" >> "$GITHUB_STEP_SUMMARY"
+          node -e "
+          const fs=require('fs');
+          for (const f of require('fs').readdirSync('build/out/jni')) {
+            const h=require('crypto').createHash('sha256').update(fs.readFileSync('build/out/jni/'+f)).digest('hex');
+            console.log('- \`'+f+'\`: sha256='+h+' size='+fs.statSync('build/out/jni/'+f).size);
+          }" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: GitHub Release（仅 tag；FR-002-014/016）
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist-archive/*.tar.gz
+            dist-archive/*.tar.gz.sha256
+            dist-archive/*-aar.aar
+          generate_release_notes: true

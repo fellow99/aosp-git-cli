@@ -26,6 +26,11 @@ git-cli/src/main/assets/**
 # provision / fetch / build workspace
 .dist/
 build/out/
+build/build-*.log
+dist-archive/
+
+# devflow 执行日志/证据（结论回写 specs/，原文不入库）
+logs/
 
 # OS
 .DS_Store
