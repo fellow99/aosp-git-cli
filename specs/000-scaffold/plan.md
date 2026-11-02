@@ -175,6 +175,14 @@ ELF 解析（`:58-130`）为极简 ELF64 小端自解析：e_type/e_machine、PT
 
 ## 7. 待实现清单 / 遗留（不属本模块缺失，属 M1/M2 工作）与未确认项
 
+### 7.0 缺陷登记（2026-11-02 评审发现）：CI 退出码断言语义失效
+
+- 现象：`build-git-cli-android.yml:37-45` 中 `node tools/provision.mjs --check` 以 2 退出时，
+  GitHub Actions 默认 `bash -e` 使 step 即刻失败，`code=$?` 与 `-ne 2` 分支不可达——
+  无法区分「预期 2=未投放」与「意外 1=工具缺陷」（与 python/node/pnpm 三仓同款，本仓此前漏登记）；
+- 影响：纪律仍有强制力（step 失败即红），但断言语义失效；
+- 修法（M1-T6 重写流水线时落地）：`code=0; node tools/provision.mjs --check || code=$?; [ "$code" -eq 2 ] || exit 1`。
+
 | 项 | 归属 | 依据 |
 |---|---|---|
 | fetch 真实实现（五输入钉选 + sha256 + deps 版本表回写） | M1-T1 | 规划 §4.1/§10 |

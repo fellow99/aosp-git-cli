@@ -71,7 +71,7 @@ aosp-git-cli/                            # node-bridge-workspace 的子目录；
 | `publish.gradle.kts` | 发布 | coordinates `io.github.fellow99` + `project.name` + `CLI_VERSION`（:36-39）；`publishToMavenCentral(false, NONE)`（:42-56，`AUTOMATIC_RELEASE=true` 才 PUBLISHED）；`signAllPublications`（:57）；singleVariant `release + SourcesJar`（:58-69）；GPG 凭据仅用户级（:75-113）；POM `<scm><url>` 补丁（:115-131）；`RELEASE=true && Token 齐` 才启用 sign/publish 任务（:133-139） | §10.1/§12 |
 | `git-cli.lock.json` | 事实源 | `active{2.51.0, arm64-v8a}`；`releases[0]`：`androidApi:24`、`name:libgit_cli.so`、`size:0`、`sha256:""`、`status:"draft"`、`mavenCentral.published:false`；`builtFrom.deps` 为**文本描述**（版本表 M1-T1 升级 ⬜）；`matrix.allowedNeeded` 5 项（libc/libm/libdl/libz/liblog）+ `execPackaging` 说明 | §8 |
 | `.gitignore` | 仓库 | 构建产物（:1-15）+ 密钥材料（:17-20）+ **`git-cli/src/main/jniLibs/**/*.so`、`git-cli/src/main/assets/**`**（:22-24）+ `.dist/`、`build/out/`（:26-28） | C3 |
-| `.github/workflows/build-git-cli-android.yml` | CI | 触发 push(main)/PR/dispatch（:7-11）；`permissions: contents: read`（:13-14）；JDK 21 temurin（:23-27）；Gradle **9.4.1**（:29-32）；`gradle :git-cli:tasks`（:35，无 .so 必须可配置）；`node tools/provision.mjs --check` 退出码必须 **= 2**（:37-45）；`node --check` ×2 + `bash -n`（:47-50） | FR-000-040~042 |
+| `.github/workflows/build-git-cli-android.yml` | CI | 触发 push(main)/PR/dispatch（:7-11）；`permissions: contents: read`（:13-14）；JDK 21 temurin（:23-27）；Gradle **9.4.1**（:29-32）；`gradle :git-cli:tasks`（:35，无 .so 必须可配置）；`node tools/provision.mjs --check` 退出码必须 **= 2**（:37-45，⚠️ `bash -e` 下断言分支不可达，见 plan.md §7 缺陷登记）；`node --check` ×2 + `bash -n`（:47-50） | FR-000-040~042 |
 
 ---
 

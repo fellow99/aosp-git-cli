@@ -28,7 +28,7 @@
 | **CA bundle** | cURL 来源 `cacert.pem`，钉版 + sha256 → assets；运行期 env 注入（`GIT_SSL_CAINFO` / `SSL_CERT_FILE`） | TLS 根证书 | D6：filesDir 布局构建期不可知，**不写死构建期路径** | ⬜ 规划（M1-T4） |
 | **helper 分发** | helper 物理件以 `lib*.so` 随 jniLibs + `filesDir/gitexec` **symlink 符号链接农场** + `GIT_EXEC_PATH` 指向农场 | https remote helper 与本地 dashed 子进程（`git-upload-pack` 等）按原名可查 | D5：SELinux exec 检查解引用到目标文件标签放行（🔶 工作区 §4.3 同款，本域 ⬜ P5 未验证）；物理件只能落 nativeLibraryDir（C1） | ⬜ **规划（M1-T3/T4 + M2-T1）**；本仓 M0 无任何 helper 实现 |
 | **assets 物化** | `assets/git-bridge-tools/`（templates + cacert.pem + gitexec-manifest.json + manifest.json 逐文件 sha256）→ 消费方幂等物化 | 随包纯数据 | D6 + 规划 §5.1/§5.3；物化复用 bridge payload 纪律 | ⬜ 规划（M1 收集 / M2 物化） |
-| **发布模式** | **两段式**：GitHub Release 先行（M1-T6，tag `v<gitver>`；归档含四源 tarball + 构建脚本，D7/C7）→ Maven Central 随后（M3，runbook [`../../docs/发布到maven-central.md`](../../docs/发布到maven-central.md)） | 分发 | 与 aosp-node-pty 同款；`publish.gradle.kts` 管线已内置 | ✅ 管线已实现 / ⬜ 两段发布动作未发生（`RELEASE=false`） |
+| **发布模式** | **两段式**：GitHub Release 先行（M1-T6，tag `v<gitver>`；归档含四源 tarball + 构建脚本，D7/C7）→ Maven Central 随后（M3，runbook [`../../../docs/发布到maven-central.md`](../../../docs/发布到maven-central.md)） | 分发 | 与 aosp-node-pty 同款；`publish.gradle.kts` 管线已内置 | ✅ 管线已实现 / ⬜ 两段发布动作未发生（`RELEASE=false`） |
 | **CI** | 配置期门禁（Gradle 配置 + provision 退出码纪律 + 语法门）→ M1 替换为真实流水线（fetch 四源 → 静态构建 → make → strip → provision → 归档 → Release） | 质量门禁 | M0 先保证「无 .so 也必须可配置」（FR-000-005） | ✅ 配置期 CI 已实现 / ⬜ 真实流水线 M1-T6 |
 | **许可** | 本仓 MIT（`LICENSE`）；git 本体 **GPLv2**（含 helper）→ **Release 归档随附对应源码**（四源 tarball + 构建脚本）；zlib/curl/OpenSSL 各随其许可 | 合规交付物 | C7/D7：仅给上游链接不视为义务履行 | ✅ NOTICES 已登记 / ⬜ 归档与措辞定稿 M1-T6（R5） |
 | **host 侧工具链语言** | Node ≥18（内置 fetch 备 M1 下载用）；bash（build 脚本）；Node 本机实测 v24.7.0 | 脚本 | 零第三方 npm 依赖 | ✅ |

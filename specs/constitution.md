@@ -5,7 +5,7 @@
 > **唯一规划基线**（`docs/000-工程规划.md` v2.0）中抽取的（依据列在每条末尾）。
 >
 > - 权威规划文档：[`../docs/000-工程规划.md`](../docs/000-工程规划.md)（v2.0，**结论以它为准**，下称「规划 §」）
-> - 工作区级纪律来源：[`../../docs/aosp+node+python+git运行方案.md`](../../docs/aosp+node+python+git运行方案.md)（fetch 不改源 / exec 门禁 / symlink 农场 / 制品线）
+> - 工作区级纪律来源：[`../../../docs/aosp+node+python+git运行方案.md`](../../../docs/aosp+node+python+git运行方案.md)（fetch 不改源 / exec 门禁 / symlink 农场 / 制品线）
 > - 版本：v1.0 · 2026-11-02 · 状态：**生效**（M0 骨架已完成，git 本体尚未构建）
 > - 适用：Gradle 骨架 · `tools/` · `scripts/` · `git-cli.lock.json` · CI · `specs/`
 
@@ -79,7 +79,7 @@
 - Portal Token / GPG 只从**用户级** `~/.gradle/gradle.properties` 读取；仓库只提供
   `gradle.properties.local.example` 模板（8 行，占位符）；
 - 发布走**两段式**：GitHub Release 先行（M1-T6 ⬜，归档含源码 tarball，见 C7）→ Maven Central 随后
-  （M3 ⬜，runbook：[`../../docs/发布到maven-central.md`](../../docs/发布到maven-central.md)）；
+  （M3 ⬜，runbook：[`../../../docs/发布到maven-central.md`](../../../docs/发布到maven-central.md)）；
   lock 回写 `status=released` / `mavenCentral.published=true` 才算闭环。
 
 依据：规划 §10.1/§12 · `publish.gradle.kts:12-14`（纪律注释）· `gradle.properties:18-19`。

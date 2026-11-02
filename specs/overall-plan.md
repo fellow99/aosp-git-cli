@@ -165,7 +165,7 @@ gates 存档」≠「产物过门禁」（门禁以 provision 逐次解析为准
    （lib*.so 集 + assets + BUILD/FETCH-METADATA + LICENSES + **四源 tarball 与构建脚本**）+ `.sha256`；
    lock 回写 `status=released`（含真实 size/sha256，C2）。**GPLv2 对应源码义务以此归档履行（C7/D7）。**
 2. **随后 Maven Central（M3）**：按工作区 runbook
-   [`../../docs/发布到maven-central.md`](../../docs/发布到maven-central.md)（§2 凭据 → §4 发布前检查 →
+   [`../../../docs/发布到maven-central.md`](../../../docs/发布到maven-central.md)（§2 凭据 → §4 发布前检查 →
    §5 上传 → §6 核验回填 `mavenCentral.published=true`）；`publish.gradle.kts` 已内置该管线；
    manifest 校验纳入发布前检查（runbook §10 已登记复用，⬜ 首次实走后回填）。
 3. **卫生门禁**：`RELEASE=false` 默认（发布任务禁用）；凭据仅用户级；`AUTOMATIC_RELEASE=true` 才
