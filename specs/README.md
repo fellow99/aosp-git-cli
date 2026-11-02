@@ -20,9 +20,12 @@
 |---|---|---|---|
 | 整体 | 项目级顶层文档 | 5 | `constitution.md` · `ARCHITECTURE.md` · `TECH.md` · `STRUCTURE.md` · `SPECS_CHECKLIST.md` |
 | 整体 | 整体规格文档 | 3 | `overall-spec.md` · `overall-plan.md` · `overall-test-cases.md` |
-| 模块 | 工程搭建（`000-scaffold`） | 4 | spec（既有）· plan（本批新增）· tasks（既有）· test-cases（既有） |
+| 模块 | 工程搭建（`000-scaffold`） | 4 | spec · plan · tasks（+T9）· test-cases · ✅ 实现（T9 收口 ⬜） |
+| 模块 | 构建（`001-building`） | 4 | spec · plan · tasks · test-cases（FR-001-xxx；⬜ M1-T1~T4） |
+| 模块 | 构建流水线（`002-building-workflow`） | 4 | spec · plan · tasks · test-cases（FR-002-xxx；⬜ M1-T5/T6） |
+| 模块 | CLI 运行期验证（`003-cli`） | 4 | spec · plan · tasks · test-cases（FR-003-xxx；⬜ M1-T7/M2；**主用例全集 TC-003-00~17**） |
 | 索引 | 本索引 | 1 | `README.md` |
-| **合计** | **1 目录 / 13 文件** | | 其中模块目录 1 个，模块文档 4 份 |
+| **合计** | **4 目录 / 21 文件** | | 模块目录 4 个，模块文档 16 份 |
 
 > **刻意不生成** `API.md` / `overall-api.md`：本仓**不含任何嵌入 API**——只有原生二进制与随包数据的
 > 可复现构建、ELF 门禁与发布流水线。对外契约面 = Maven 坐标 + 运行期 env 注入契约（规划 §7.1，
@@ -56,28 +59,65 @@
 
 ---
 
-## 三、模块：000-scaffold — 工程搭建
+## 三、模块文档
+
+### 000-scaffold — 工程搭建（✅ M0）
 
 > 确立仓库结构、构建系统、版本纪律、exec 门禁工具与配置期 CI，使 M1 交叉编译只需在骨架内填充实现。
-> 现状：实现全部落地（tasks T1–T8 ✅）；git 本体、helper、assets 属 M1/M2（⬜ 规划引用）。
+> 现状：实现全部落地（T1–T8 ✅）；**T9 残留收口 ⬜**（NC-1 已定稿、白名单对齐、残留清理、负例转正）。
 
 | 文档 | 链接 | 说明 |
 |---|---|---|
-| 功能规格 | [000-scaffold/spec.md](./000-scaffold/spec.md) | 模块功能规格（目的、FR-000-001~042 摘要、验收场景）· 既有 |
-| 技术方案 | [000-scaffold/plan.md](./000-scaffold/plan.md) | **as-built 实现方案**：技术上下文、宪法合规逐条检查、`git-cli.lock.json` 全字段数据模型、provision CLI 与退出码契约（七门禁逐条行号）、文件清单（真实行数）、FR 交叉引用、NC-1 未确认项 · **本批新增** |
-| 任务拆解 | [000-scaffold/tasks.md](./000-scaffold/tasks.md) | T1–T8 全勾 · 既有 |
-| 测试用例 | [000-scaffold/test-cases.md](./000-scaffold/test-cases.md) | TC-01~05 + 2026-11-02 执行记录 ✅ · 既有 |
+| 功能规格 | [000-scaffold/spec.md](./000-scaffold/spec.md) | FR-000-xxx（骨架/lock/provision/CI 族） |
+| 技术方案 | [000-scaffold/plan.md](./000-scaffold/plan.md) | as-built：lock 全字段模型、七门禁行号、退出码契约、NC-1 已关闭 |
+| 任务拆解 | [000-scaffold/tasks.md](./000-scaffold/tasks.md) | T1–T8 ✅ + T9 ⬜ |
+| 测试用例 | [000-scaffold/test-cases.md](./000-scaffold/test-cases.md) | TC-01~05 ✅ + 负例族（TC-000-06~10，随 001/002 转正） |
+
+### 001-building — 构建（⬜ M1-T1~T4）
+
+> 五输入钉选 fetch → zlib/openssl/curl 静态交叉构建 → git 试编 + helper 实产探明 → strip/`libgit_*.so` 命名/assets 收集。
+
+| 文档 | 链接 | 说明 |
+|---|---|---|
+| 功能规格 | [001-building/spec.md](./001-building/spec.md) | FR-001-001~006（fetch）/010~014（依赖）/020~026（git）/030~035（整理） |
+| 技术方案 | [001-building/plan.md](./001-building/plan.md) | PINS 钉选表、S1–S9 流程、config.mak 参数、命名映射、lock 扩展 |
+| 任务拆解 | [001-building/tasks.md](./001-building/tasks.md) | T1–T13 |
+| 测试用例 | [001-building/test-cases.md](./001-building/test-cases.md) | TC-001-01~18（L1/L1.5） |
+
+### 002-building-workflow — 构建流水线（⬜ M1-T5/T6）
+
+> provision 扩展（helper 同门禁 + jniLibsWhitelist + manifest 一致性 + assets 校验）+ CI 真实流水线 + Release + lock 回写。
+
+| 文档 | 链接 | 说明 |
+|---|---|---|
+| 功能规格 | [002-building-workflow/spec.md](./002-building-workflow/spec.md) | FR-002-001~006（provision 扩展）/010~016（CI）/020~021（不回归） |
+| 技术方案 | [002-building-workflow/plan.md](./002-building-workflow/plan.md) | 命令面增量、白名单/一致性规则、workflow 步骤、断言修复 |
+| 任务拆解 | [002-building-workflow/tasks.md](./002-building-workflow/tasks.md) | T1–T11 |
+| 测试用例 | [002-building-workflow/test-cases.md](./002-building-workflow/test-cases.md) | TC-002-01~20（负例矩阵 + 断言语义） |
+
+### 003-cli — CLI 运行期验证（⬜ M1-T7/M2-T2 shell 域等价）
+
+> adb shell 域 L3 探针：部署 + symlink 农场 + env 契约注入 + **CLI 主用例全集**（版本/本地链含中文/https/CA 反证/限制事实化）。
+
+| 文档 | 链接 | 说明 |
+|---|---|---|
+| 功能规格 | [003-cli/spec.md](./003-cli/spec.md) | FR-003-001~005（harness）/010~018（主行为）/030~034（env 契约）/040~044（限制事实化） |
+| 技术方案 | [003-cli/plan.md](./003-cli/plan.md) | harness 设计、目录布局、P1–P7 映射、设备策略 |
+| 任务拆解 | [003-cli/tasks.md](./003-cli/tasks.md) | T1–T10 |
+| 测试用例 | [003-cli/test-cases.md](./003-cli/test-cases.md) | **TC-003-00~17 主用例全集**（A 环境自检/B 版本/C 本地链/D https/E 限制） |
 
 ---
 
-## 四、模块编号一览
+## 四、模块编号一览（注册于规划 §10.2，2026-11-02）
 
 | 编号 | 模块名 | 目录 | 状态 | 规划出处 |
 |---|---|---|---|---|
-| 000 | 工程搭建（scaffold） | [`000-scaffold/`](./000-scaffold/) | ✅ M0 完成（含本批 plan.md） | 规划 §10 M0 |
-| 001+ | M1 立项时分配（候选：cross-compile-build / provision-extensions / assets-manifest / release-pipeline） | `specs/001-…` 起 | ⬜ 未建 | 规划 §10 M1-T1~T6 |
+| 000 | 工程搭建（scaffold） | [`000-scaffold/`](./000-scaffold/) | ✅ M0 完成（T9 收口 ⬜） | 规划 §10 M0 + §10.2 |
+| 001 | 构建（源钉选 + 交叉编译） | [`001-building/`](./001-building/) | ⬜ 立项 | 规划 §10 M1-T1~T4 |
+| 002 | 构建流水线（门禁扩展 + CI + 发布） | [`002-building-workflow/`](./002-building-workflow/) | ⬜ 立项 | 规划 §10 M1-T5/T6 |
+| 003 | CLI 运行期验证 | [`003-cli/`](./003-cli/) | ⬜ 立项 | 规划 §10 M1-T7 + M2-T2（shell 域等价） |
 
-> 编号分配须**先写进规划 §10 再建目录**（C8）；`specs/` 当前只有 `000-scaffold/` 一个模块目录。
+> 编号分配须**先写进规划 §10.2 再建目录**（C8）；FR 族 = `FR-<模块号>-xxx`。
 
 ---
 

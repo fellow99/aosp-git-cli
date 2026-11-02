@@ -26,17 +26,19 @@
 
 ---
 
-## 二、模块级文档（当前唯一在册模块：000-scaffold）
+## 二、模块级文档（模块注册见规划 §10.2）
 
 | # | 模块 | 目录 | spec.md | plan.md | tasks.md | test-cases.md | 状态 | 备注 |
 |---|---|---|---|---|---|---|---|---|
-| M-01 | 工程搭建（scaffold） | [`000-scaffold/`](./000-scaffold/) | ✅（既有） | ✅（本批新增） | ✅（既有） | ✅（既有，含 2026-11-02 执行记录） | ⚠️ | 实现全部落地（T1–T8）；⬜ 未闭合项均属 M1/M2：fetch/build 实现、provision 扩展、lock released、负例用例、NC-1（`gates` 语义） |
+| M-01 | 工程搭建（scaffold） | [`000-scaffold/`](./000-scaffold/) | ✅ | ✅ | ✅（+T9） | ✅ | ⚠️ | 实现落地（T1–T8）；T9 残留收口 ⬜（NC-1 已定稿待落地、白名单对齐、残留清理、负例转正）；其余 ⬜ 均属 001/002/003 |
+| M-02 | 构建（building） | [`001-building/`](./001-building/) | ✅ | ✅ | ✅ | ✅ | ⬜ | 规划立项（M1-T1~T4）；fetch/交叉编译/helper 探明/assets 收集 |
+| M-03 | 构建流水线（building-workflow） | [`002-building-workflow/`](./002-building-workflow/) | ✅ | ✅ | ✅ | ✅ | ⬜ | 规划立项（M1-T5/T6）；provision 扩展 + CI + Release + lock 回写 |
+| M-04 | CLI 运行期验证（cli） | [`003-cli/`](./003-cli/) | ✅ | ✅ | ✅ | ✅ | ⬜ | 规划立项（M1-T7/M2-T2 shell 域等价）；主用例全集 TC-003-00~17 |
 
 **模块纪律**：每个模块目录 `NNN-<name>/` 下 `spec.md`（需求与验收，成对必须）+ `plan.md`（实现方案，
 FR 交叉引用 + 真实行数）必备；复杂模块可追加 `tasks.md` / `test-cases.md`。
 
-**预留编号**：`001`+ 待 M1 立项时启用（候选：001-cross-compile-build 四源交叉编译、002-provision-extensions
-门禁扩展、003-assets-manifest 随包数据、004-release-pipeline CI 与发布）；编号分配须先写进规划 §10 再建目录。
+**预留编号**：`004`+ 待立项（候选：openssh 伴生线、跟随机制 runbook）；编号分配须先写进规划 §10.2 再建目录。
 
 ---
 

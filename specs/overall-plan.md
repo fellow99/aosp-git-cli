@@ -61,21 +61,21 @@
 
 ## 3. 实现策略总览
 
-### 3.1 里程碑 ↔ 现状（规划 §10）
+### 3.1 里程碑 ↔ 现状 ↔ 模块（规划 §10/§10.2）
 
-| 里程碑 | 内容 | 现状 |
-|---|---|---|
-| **M0 骨架** | Gradle 骨架、exec 门禁 provision、draft lock、骨架脚本、配置期 CI | ✅ 完成（含 specs 三件套；本批补齐 plan.md 与项目级规格） |
-| M1-T1 | fetch 完整实现（五输入钉选 + sha256；deps 版本表回写） | ⬜ |
-| M1-T2 | 依赖静态构建（zlib→openssl→curl，全 `.a`） | ⬜ |
-| M1-T3 | git configure/make 首轮试编 + **helper 实产清单探明**（回写规划 §5.2/lock） | ⬜（R1 高风险首项） |
-| M1-T4 | strip + 16KB + helper `libgit_*.so` 命名 + assets 收集 | ⬜ |
-| M1-T5 | provision 扩展（helper 同门禁 + jniLibs 白名单 + manifest 一致性 + assets 校验） | ⬜ |
-| M1-T6 | CI 真实流水线 + Release `v<gitver>`（含 C7 归档）+ lock 回写 | ⬜ |
-| M1-T7 | 最小消费探针（useLegacyPackaging 对照 + exec 回程 `git --version`） | ⬜（工作区探针 1/2） |
-| M2 | 消费方物化 + 农场 + env 注入 + 真机 P1–P7 | ⬜ |
-| M3 | Maven Central 发布 | ⬜ |
-| M4 | 跟随机制（git 新版 runbook）；可选 openssh 伴生线立项 | ⬜ |
+| 里程碑 | 内容 | 模块归属 | 现状 |
+|---|---|---|---|
+| **M0 骨架** | Gradle 骨架、exec 门禁 provision、draft lock、骨架脚本、配置期 CI | 000-scaffold | ✅ 完成（T9 残留收口 ⬜） |
+| M1-T1 | fetch 完整实现（五输入钉选 + sha256；deps 版本表回写） | 001-building T1/T2 | ⬜ |
+| M1-T2 | 依赖静态构建（zlib→openssl→curl，全 `.a`） | 001 T3~T5 | ⬜ |
+| M1-T3 | git configure/make 首轮试编 + **helper 实产清单探明**（回写规划 §5.2/lock） | 001 T6~T8 | ⬜（R1 高风险首项） |
+| M1-T4 | strip + 16KB + helper `libgit_*.so` 命名 + assets 收集 | 001 T9~T11 | ⬜ |
+| M1-T5 | provision 扩展（helper 同门禁 + jniLibs 白名单 + manifest 一致性 + assets 校验） | 002-building-workflow T1~T6 | ⬜ |
+| M1-T6 | CI 真实流水线 + Release `v<gitver>`（含 C7 归档）+ lock 回写 | 002 T7~T9 | ⬜ |
+| M1-T7 | 最小消费探针（useLegacyPackaging 对照 + exec 回程 `git --version`） | 003-cli（本仓 adb 等价部分）+ 消费方（App 域） | ⬜（工作区探针 1/2） |
+| M2 | 消费方物化 + 农场 + env 注入 + 真机 P1–P7 | 003-cli（shell 域等价）+ 消费方（App 域） | ⬜ |
+| M3 | Maven Central 发布 | —（publish.gradle.kts 已内置） | ⬜ |
+| M4 | 跟随机制（git 新版 runbook）；可选 openssh 伴生线立项 | — | ⬜ |
 
 ### 3.2 依赖顺序（不可并行者）
 

@@ -3,7 +3,7 @@
 > **模块**：000-scaffold 工程搭建 · **性质**：技术实现计划（as-built：只写已建成事实；M1/M2 规划以「规划引用」标注）。
 > **依据**：[`../constitution.md`](../constitution.md)（C1–C8）· [`../../docs/000-工程规划.md`](../../docs/000-工程规划.md)（唯一规划基线，下称「规划 §」）· 本模块 [`spec.md`](./spec.md)（需求与验收）· [`tasks.md`](./tasks.md)（任务，T1–T8 全勾）· [`test-cases.md`](./test-cases.md)（TC-01~05 执行记录）。
 > **标记**：✅实测（行号即本仓 2026-11-02 实读行号）/ 🔶沿用 / ⬜未实测 / ⚠️冲突或风险。
-> **版本**：v1.0 · 2026-11-02 · 状态：**实现已落地**（T1–T8 完成；git 本体未构建，属 M1 ⬜）。
+> **版本**：v1.1 · 2026-11-02 · 状态：**实现已落地**（T1–T8 完成；T9 残留收口 ⬜；git 本体未构建，属 001-building ⬜）。v1.1：NC-1 定稿关闭、登记 T9、模块编号 001/002/003 分裂（规划 §10.2）。
 
 ---
 
@@ -193,12 +193,13 @@ ELF 解析（`:58-130`）为极简 ELF64 小端自解析：e_type/e_machine、PT
 | `META-INF/git-cli.properties` 首次生成（投放链路走通） | M1 | §4.4 ⬜ |
 | 负例用例 TC-000-07~10 | M1 | [`../overall-test-cases.md`](../overall-test-cases.md) §2.2 |
 
-**未确认项（[NEEDS CLARIFICATION]，1/3）**：
+**未确认项（[NEEDS CLARIFICATION]，0/3——原 NC-1 已于 2026-11-02 定稿关闭）**：
 
-- **NC-1**：`git-cli.lock.json` 的 `gates` 七项在 **draft（size=0/sha256 空）即全 `true`**，且 provision
-  **不读取**该字段（每次重新解析产物判定）。语义待定：是「门禁 profile 的目标态声明」还是「结论存档
-  （应为构建后回写）」？若为后者，draft 期全 `true` 与 C6「未实测不当事实」存在张力。**建议**：M1-T6
-  回写真实哈希时一并定稿（初值改 `false` 或加 `$comment` 说明语义），并决定是否让工具校验 lock 自洽。
+- ~~**NC-1**：`git-cli.lock.json` 的 `gates` 七项语义待定~~ → **定稿（T9 落地）**：
+  `gates` 语义 = **门禁结论存档**（provision 每次重新解析产物判定，不读存档；存档仅为人读的
+  最后一次结论快照）。因此 **draft 期初值必须全 `false`**（C6：未实测不当事实），首个真实构建
+  过门禁后回写 `true` 并同步真实 sha256/size。实施：T9 ①（lock `gates` 全改 `false` + `$comment`
+  注明语义；provision 行为不变——维持不读取）。
 
 **残留字段（⚠️ 不阻塞，建议 M1 顺手清理；详见 [`../STRUCTURE.md`](../STRUCTURE.md) §5）**：
 `gradle.properties:3` `VERSION_NAME=0.1.0`（无读取方）；`provision.mjs:196,263` `pairedRuntime`（pty 线

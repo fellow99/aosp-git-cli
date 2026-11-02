@@ -44,19 +44,14 @@
 | TC-000-09 | 门禁七项负例 | L1 | FR-000-031 | 非 ELF / PIE 无 interp / x86 产物 / 超 4KB 对齐 ⇒ 各自 ✘ 且 exit 2 | `provision --inspect <构造文件>` | ⬜（M1 用真实产物） |
 | TC-000-10 | draft 只记录不比对 | L1 | FR-000-032 | draft 下改产物字节 ⇒ ⑤⑥ 显示「仅记录」，其它门禁仍判死 | 构造字节差异 | ⬜（M1） |
 
-### 2.3 M1/M2/M3（规划引用，未实现 ⬜）
+### 2.3 M1/M2/M3（已立项进入模块；逐条用例在模块 test-cases.md，此处只索引）
 
-| 用例族 ID | 名称 | 层 | 规划出处 | 判据（可证伪） | 状态 |
+| 用例族 | 归属模块 | 层 | 规划出处 | 判据（可证伪） | 状态 |
 |---|---|---|---|---|---|
-| TC-M1-01 | fetch 五输入钉选 | L1.5 | §4.1/§10 M1-T1 | 四源 + cacert 哈希与钉选一致；`.dist/src` 可复现 | ⬜ |
-| TC-M1-02 | 依赖静态构建 | L1.5 | §4.2 M1-T2 | `libcurl.a` 等产物存在且可链接 | ⬜ |
-| TC-M1-03 | git 试编 + helper 清单 | L1.5 | §4.2④/§10 M1-T3 | `libgit_cli.so` + helper 集产出；实产清单回写 §5.2/lock | ⬜ |
-| TC-M1-04 | 七门禁全过（含 16KB） | L1 | §6 | 每个产物（主+helper）七项 ✓ | ⬜ |
-| TC-M1-05 | provision 扩展 | L1 | §5.3 M1-T5 | 白名单校验、manifest 一致性、assets 纯数据校验通过；负例拒绝 | ⬜ |
-| TC-M1-06 | CI 流水线 + Release | L1.5 | §9/§10 M1-T6 | 干净 runner 重出同哈希；归档含四源 tarball + 构建脚本（C7）；lock=released | ⬜ |
-| TC-M1-07 | 落盘探针 | L3 | §10 M1-T7 | `useLegacyPackaging=true` 时物理件在 nativeLibraryDir；`git --version` 回程 | ⬜ |
-| TC-M2-01~07 | 真机回程 P1–P7 | L3 | §7.3 | P1 版本回程 · P2 本地链 · P3/P4 https · P5 农场 SELinux · P6 CA 反证 · P7 16KB/中文路径 | ⬜ |
-| TC-M3-01 | Maven Central 可解析 | L1 | §10.1 | 坐标可拉取；POM/许可/sources 核对 | ⬜ |
+| TC-001-01~18（fetch/依赖/试编/探明/strip/命名/manifest/assets/METADATA/可复现） | [001-building](./001-building/test-cases.md) | L1/L1.5 | §4/§5.2/§10 M1-T1~T4 | 见模块用例表 | ⬜ |
+| TC-002-01~20（多文件门禁/白名单/manifest 一致性/assets/幂等/断言语义/CI 静态审查/本机预演） | [002-building-workflow](./002-building-workflow/test-cases.md) | L1 | §5.3/§9/§10 M1-T5/T6 | 见模块用例表 | ⬜ |
+| TC-003-00~17（部署自检/版本/本地全链含中文/本地 clone 经农场/https/CA 反证/农场缺失/限制事实化/16KB） | [003-cli](./003-cli/test-cases.md) | L3 | §7.3 P1–P7（shell 域等价） | 见模块用例表 | ⬜ |
+| TC-M3-01 | —（Maven 阶段） | L1 | §10.1 | 坐标可拉取；POM/许可/sources 核对 | ⬜ |
 
 ---
 
