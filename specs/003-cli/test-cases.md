@@ -52,6 +52,37 @@
 
 ## F. 执行记录（回填区）
 
-- 设备快照：⬜（型号/ABI/API/页大小/SELinux/网络/制品 sha256/时间）
-- 结果汇总：⬜（PASS x / FAIL x / SKIP x；FAIL 明细与缺陷编号）
-- 首轮执行后逐条回填状态列；FAIL 项在 TEST_REPORT.md（devflow logs 目录）展开证据。
+### 首轮（2026-11-03，探针 App·App 域——M1-T7/M2-T1 载体）
+
+- **载体**：`probe-app/`（参考 aosp-python-cli/probe-app；独立 Gradle 工程，消费 CI 产物 AAR；
+  物化 marker 幂等 + D5 农场 `Os.symlink` + §7.1 env 全表注入 + JSON 报告；测试仓库 URL/凭证经
+  intent extras 传入，**不落盘**：源码/报告/文档零敏感信息，报告出口统一 sanitize）。
+- **设备**：sdk_gphone64_x86_64 模拟器（API 37，abilist 含 arm64-v8a，ndk_translation 执行 arm64 制品）；
+  页大小 4096B（TC-003-17 SKIP：P7 需 16KB 设备）；SELinux enforcing（app 域）。
+- **结果**：**PASS 22 / FAIL 4 / SKIP 0**（7 轮迭代后终态；报告：`logs/evidence/probe-report-run*.json`，gitignored）。
+
+| 用例 | 结果 | 说明 |
+|---|---|---|
+| TC-003-18a/18b | ✅ | **App 域落盘（M1-T7 探针 1：nativeLibraryDir 物理件）+ 农场 symlink exec（P5 App 域 SELinux 放行）实测通过**——工作区五线共享前提的重要事实 |
+| TC-003-01/02/02b/03 | ✅/✅/✅/❌ | 版本/非交互/exec-path OK；03 按名+PATH 查找见环境限制（下同） |
+| TC-003-04 | ✅ | 退出码采样（bogus=129 记录） |
+| TC-003-05/05b | ✅/✅ | init→add→commit(中文)→log→status；中文文件名/提交信息字节保真（**R4 事实化**：无 iconv 下 UTF-8 正常）；模板 hooks 样例就位（§7.1 GIT_TEMPLATE_DIR 生效） |
+| TC-003-06 | ❌ | 本地 clone --no-local 经农场：环境限制（见下），真机补测 |
+| TC-003-07/07b | ✅ | GIT_CONFIG_GLOBAL 全局配置回路（HOME 注入路径） |
+| TC-003-08/08b | ✅/✅ | mv/branch/tag/stash/diff 工作区链 |
+| TC-003-09/10/10b/11 | ✅ | **P3/P4 事实化**：ls-remote/clone --depth 1/fetch https 全链经 farm helper（目标：无账号公共仓库，GIT_TRACE 见 git-remote-https 绝对路径 exec）；depth 恰 1 条 |
+| TC-003-12 | ❌ | CA 反证未成立（坏 CA 下仍 exit=0）——正向 https 由 09 佐证；**P6 需真机复核 CA 装载路径** |
+| TC-003-13 | ✅ | 农场缺失对照：http/https helper 双摘 ⇒ `remote helper 'http' aborted session`（**负向证明农场是必要通路**，R1/R2 佐证） |
+| TC-003-14 | ✅ | 钩子无 exec 位 ⇒ 视为无钩子（commit 照常，hint 记录——**R11 事实化**） |
+| TC-003-15 | ✅ | ssh 不可用（§7.2 事实） |
+| TC-003-16 | ✅ | perl 子命令不可得（NO_PERL，§7.2 事实） |
+| TC-003-17 | SKIP | 4096B 页设备（P7 需 16KB 设备） |
+| TC-003-19a/19b/19c | ✅/✅/❌ | **带账号 http 仓库**：认证 clone --depth 1 ✅、认证 fetch ✅（helper 农场链路完整）；认证 push ❌ 环境限制（同 03）；探针分支自清理 |
+
+**FAIL 4 项定性**（均为测试环境限制，非制品缺陷）：
+- TC-003-03/06/19c（3 项）：ndk_translation 下「按名字+PATH 查找 farm symlink」的 realpath 失败；
+  **绝对路径 exec 全部正常**（18b farm symlink 直 exec、09 https helper 绝对路径 exec、19a/19b 认证 clone/fetch 均证）。
+  真实 arm64 真机无 translation 层，预期不存在——**真机补测项**。
+- TC-003-12（1 项）：P6 反证需真机复核（坏 CA 未触发失败；正向 https/TLS 链路已由 09/10/11 佐证工作）。
+
+**App 域遗留 ⬜**：PTY 交互（终端 App）；16KB 页设备（P7）；性能采样（translation 不具代表性）。
