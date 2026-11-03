@@ -55,10 +55,14 @@
           "libgit_http_fetch.so",
           "libgit_http_push.so"
         ],
-        "buildEvidence": "first real build: GH Actions run 41573860213 @ 65118fa; 7-gate PASS (NEEDED=[libdl.so,libc.so], 16KB align 0x4000); farm=8 entries; dashed (git/upload-pack/receive-pack/upload-archive) argv[0]-dispatch from libgit_cli.so"
+        "buildEvidence": "v2.56.0 GitHub Release: tag push run 41612732990 (commit 6da0c34); 7-gate PASS; 归档 sha256 001aae77…（见 Release assets .sha256）",
+        "reproducibility": {
+          "mainBinary": "bit-reproducible across two independent builds (sha256 17171683… twice)",
+          "helpers": "NOT bit-reproducible: libcurl.a/openssl .a archives embed timestamps → libgit_remote_curl.so sha256 differs per build (b2d7a0a6@65118fa vs fc25b57e@6da0c34). released ⑤⑥ hard-compare will flag each rebuild — expected, update lock via new lock-writeback.json (not a defect)"
+        }
       },
       "gates": {
-        "$comment": "门禁结论存档：provision 不读取本字段（每次解析产物判定）；draft 初值 false（C6 未实测不当事实），构建过门禁后回写 true",
+        "$comment": "回写工件：维护者核验后以本条目覆盖 lock 并置 status=released（C2 单向）",
         "eTypeEtDyn": true,
         "ptInterpSystemLinker": true,
         "eMachineAArch64": true,
@@ -71,7 +75,7 @@
         "coordinates": "io.github.fellow99:git-cli:2.56.0",
         "published": false
       },
-      "status": "draft"
+      "status": "released"
     }
   ],
   "matrix": {
