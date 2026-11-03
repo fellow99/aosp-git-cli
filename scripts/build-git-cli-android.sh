@@ -368,7 +368,7 @@ if [[ ! "$STAGE" < "S8" ]]; then
   # 农场清单：以 S6 实产为准（别名按 make 实产形态生成；此处按主映射 + dashed 分发）
   node - "$OUT" <<'NODE'
 const fs = require('fs'), path = require('path');
-const out = process.argv[4 - 1];
+const out = process.argv[2];
 const inv = JSON.parse(fs.readFileSync(path.join(out, 'helper-inventory.json'), 'utf8')).entries.map((e) => e.name);
 const has = (n) => inv.includes(n);
 const farm = {
