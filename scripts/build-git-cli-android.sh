@@ -390,11 +390,8 @@ const dst = path.join(out, 'assets', 'git-bridge-tools', 'gitexec-manifest.json'
 fs.writeFileSync(dst, JSON.stringify(manifest, null, 2) + '\n');
 console.log('[build] gitexec-manifest.json：' + Object.keys(farm).length + ' 条 farm 条目');
 NODE
-  # 纯数据纪律：去可执行位、拒绝 .so
-  find "$ASSETS" -type f ! -name "*.pem" ! -name "*.json" ! -name "*.sample" ! -name "*.hook" | while read -r f; do
-    case "$f" in *hooks*|*Info/exclude*|*info/exclude*) ;; esac
-  done
-  chmod -R a-x "$ASSETS" 2>/dev/null || true
+  # 纯数据纪律：仅对文件去可执行位（目录需保留 x 才可遍历）；拒绝 .so
+  find "$ASSETS" -type f -exec chmod a-x {} +
   if find "$ASSETS" -type f -name "*.so" | grep -q .; then die "assets 内出现 .so（纯数据纪律）"; fi
   say "✔ assets 就绪（templates + cacert.pem + gitexec-manifest.json；无可执行位）"
 fi
