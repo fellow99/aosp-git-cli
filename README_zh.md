@@ -19,7 +19,7 @@ node-bridge-workspace 的 `docs/aosp+node+python+git运行方案.md`。
 
 | 版本 | 状态 | 链接 |
 |---|---|---|
-| 2.51.0 | ⬜ draft（M1 首产后发布；以 CI 实际钉住的 git 版本为准） | — |
+| 2.56.0 | ⬜ draft（M1 首产后发布；以 CI 实际钉住的 git 版本为准） | — |
 
 ## 构建口径（要点）
 
@@ -32,7 +32,7 @@ node-bridge-workspace 的 `docs/aosp+node+python+git运行方案.md`。
 
 ```kotlin
 dependencies {
-    runtimeOnly("io.github.fellow99:git-cli:2.51.0") // 独立版本，不与 node 系配对
+    runtimeOnly("io.github.fellow99:git-cli:2.56.0") // 独立版本，不与 node 系配对
 }
 ```
 
@@ -48,8 +48,8 @@ dependencies {
 ## 如何构建（000-scaffold 骨架；M1 接入真实交叉编译）
 
 ```bash
-node scripts/fetch-git-cli-source.mjs --git 2.51.0 --out .dist/src   # M1
-bash scripts/build-git-cli-android.sh --git 2.51.0 --api 24 \
+node scripts/fetch-git-cli-source.mjs --git 2.56.0 --out .dist/src   # M1
+bash scripts/build-git-cli-android.sh --git 2.56.0 --api 24 \
   --src .dist/src/git --deps .dist/src --ndk "$ANDROID_NDK_HOME" --out build/out  # M1
 node tools/provision.mjs --out git-cli/src/main/jniLibs --from build/out/libgit_cli.so
 node tools/provision.mjs --check

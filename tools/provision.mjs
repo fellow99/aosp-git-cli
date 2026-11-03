@@ -134,9 +134,10 @@ function parseElf(buf) {
 /**
  * 七门禁（exec 型 profile）。
  * relFor：⑤⑥ 的锁值来源 —— 主二进制用 releases[] 条目；helper 用 builtFrom.helpers[文件名]；
- * 无锁值（draft 未回写）⇒ ⑤⑥ 只记录不比对。
+ * **⑤⑥ 硬比对仅在 status==='released' 时生效**（宪法 C2：draft→released 单向；
+ * draft 期锁值是 CI 钉选的参考值，只记录 + 失配告警——产物不必比特级可复现也不误杀投放）。
  */
-function gates(buf, relFor, allowedNeeded) {
+function gates(buf, relFor, allowedNeeded, enforceHash) {
   let elf;
   try {
     elf = parseElf(buf);
@@ -158,9 +159,11 @@ function gates(buf, relFor, allowedNeeded) {
   const banned = elf.needed.filter((n) => !allowedNeeded.includes(n));
   add('④ DT_NEEDED 全部在白名单', banned.length === 0,
     `NEEDED=${JSON.stringify(elf.needed)}；白名单外=${banned.length ? JSON.stringify(banned) : '无'}`);
-  if (expectSha) add('⑤ SHA-256 与锁一致', sha256 === expectSha, `${sha256.slice(0, 16)}… vs ${expectSha.slice(0, 16)}…`);
+  if (enforceHash && expectSha) add('⑤ SHA-256 与锁一致（released 硬比对）', sha256 === expectSha, `${sha256.slice(0, 16)}… vs ${expectSha.slice(0, 16)}…`);
+  else if (expectSha) add('⑤ SHA-256（draft：锁值为 CI 参考值，只记录' + (sha256 === expectSha ? '，一致' : '，⚠ 与锁失配但放行') + ')', true, sha256);
   else add('⑤ SHA-256（draft 无锁值，仅记录）', true, sha256);
-  if (expectSize) add('⑥ 大小与锁一致', buf.length === expectSize, `${buf.length} vs ${expectSize}`);
+  if (enforceHash && expectSize) add('⑥ 大小与锁一致（released 硬比对）', buf.length === expectSize, `${buf.length} vs ${expectSize}`);
+  else if (expectSize) add('⑥ 大小（draft：锁值为 CI 参考值，只记录' + (buf.length === expectSize ? '，一致' : '，⚠ 与锁失配但放行') + ')', true, `${buf.length}`);
   else add('⑥ 大小（draft 无锁值，仅记录）', true, `${buf.length}`);
   add('⑦ 16 KB 页对齐', minAlign >= 0x4000, `min LOAD align=0x${minAlign.toString(16)}（小于 0x4000=16KB，16 KB 页设备不合格）`);
 
@@ -198,8 +201,9 @@ function validateAssetsPure(dir) {
   for (const rel of walkFiles(dir)) {
     const p = path.join(dir, rel);
     if (rel.endsWith('.so')) problems.push(`出现 .so：${rel}`);
-    const st = fs.statSync(p);
-    if (st.mode & 0o111) problems.push(`可执行位：${rel}（mode=${(st.mode & 0o777).toString(8)}）`);
+    const st = fs.lstatSync(p);
+    if (st.isSymbolicLink()) problems.push(`symlink 不允许：${rel}（assets 必须纯数据实体文件）`);
+    else if (st.mode & 0o111) problems.push(`可执行位：${rel}（mode=${(st.mode & 0o777).toString(8)}）`);
   }
   return problems;
 }
@@ -222,7 +226,7 @@ function checkGitexecManifest(manifestPath, whitelist, exempt) {
     if (!whitelist.includes(phys)) problems.push(`悬空：farm['${name}'] → '${phys}' 不在 jniLibsWhitelist`);
   }
   for (const phys of whitelist) {
-    if (!physicalUsed.has(phys) && !(exempt ?? []).some((e) => e.startsWith(phys))) {
+    if (!physicalUsed.has(phys) && !(exempt ?? []).includes(phys)) {
       problems.push(`孤儿：白名单 '${phys}' 无 farm 条目且未登记豁免（matrix.helperExempt）`);
     }
   }
@@ -253,7 +257,13 @@ function main() {
   const active = { version: rel.version, abi: rel.abi, name: rel.name || DEFAULT_BINARY };
 
   say(`目标 release：version=${rel.version} abi=${rel.abi}（独立 semver，无配对）`);
-  if (rel.status === 'draft') say('⚠ lock 中该 release 为 draft：sha/size 无锁值，仅记录不比对');
+  const enforceHash = rel.status === 'released';
+  if (rel.status === 'draft') {
+    say('⚠ lock 中该 release 为 draft：⑤⑥ 只记录' +
+      ((rel.sha256 && rel.sha256.length === 64) || (rel.size && rel.size > 0)
+        ? '（锁值 = CI 钉选参考值，失配告警不拦截）；released 后转硬比对'
+        : '（无锁值）'));
+  }
   if (!whitelist) say('⚠ lock 无 matrix.jniLibsWhitelist：回落 000 单文件口径（仅 ' + active.name + '）');
 
   // helper 的 ⑤⑥ 锁值来源（draft 期通常为空 → 只记录）
@@ -266,7 +276,7 @@ function main() {
   const inspectPath = argOf('--inspect');
   if (inspectPath) {
     const buf = fs.readFileSync(inspectPath);
-    const g = gates(buf, relFor(path.basename(inspectPath)), allowedNeeded);
+    const g = gates(buf, relFor(path.basename(inspectPath)), allowedNeeded, enforceHash);
     printGates(g);
     say(g.ok ? '门禁：全过' : '门禁：不合格');
     process.exit(g.ok ? 0 : 2);
@@ -338,7 +348,7 @@ function main() {
     for (const f of present) {
       if (illegal.includes(f)) continue;
       say(`门禁：${f}`);
-      const g = gates(fs.readFileSync(path.join(abiDir, f)), relFor(f), allowedNeeded);
+      const g = gates(fs.readFileSync(path.join(abiDir, f)), relFor(f), allowedNeeded, enforceHash);
       printGates(g);
       ok = ok && g.ok;
     }
@@ -397,7 +407,7 @@ function main() {
   for (const { srcFile, name } of sources) {
     say(`门禁：${name}`);
     const buf = fs.readFileSync(srcFile);
-    const g = gates(buf, relFor(name), allowedNeeded);
+    const g = gates(buf, relFor(name), allowedNeeded, enforceHash);
     printGates(g);
     results.push({ name, buf, g });
   }

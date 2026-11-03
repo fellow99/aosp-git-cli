@@ -15,7 +15,7 @@
 | **Android 插件** | AGP **9.2.1**（`gradle/libs.versions.toml:2`） | `com.android.library` | AAR 容器所需最小插件面 | ✅ 已实现 |
 | **发布插件** | `com.vanniktech.maven.publish.base` **0.37.0**（`settings.gradle.kts:3`） | Maven Central 发布（Central Portal 直连） | 工作区五线同款；`pomFromGradleProperties` + singleVariant + 签名 | ✅ 已实现（发布动作被 C5 门禁禁用） |
 | **JDK** | Temurin **21**（CI workflow:23-27） | Gradle 运行时 | AGP 9 要求 | ✅ 已实现 |
-| **发布坐标/版本源** | `io.github.fellow99:git-cli:<CLI_VERSION>`；`CLI_VERSION` = git 上游版本，**独立 semver**（`gradle.properties:7`，当前 `2.51.0` draft） | Maven 坐标 | 与 node 系无 ABI 约束、无配对顺序（D4）；缺失即构建报错（`git-cli/build.gradle.kts:16-17`） | ✅ 已实现（值为 draft，M1 以 CI 实际钉选版回写 ⬜） |
+| **发布坐标/版本源** | `io.github.fellow99:git-cli:<CLI_VERSION>`；`CLI_VERSION` = git 上游版本，**独立 semver**（`gradle.properties:7`，当前 `2.56.0` draft） | Maven 坐标 | 与 node 系无 ABI 约束、无配对顺序（D4）；缺失即构建报错（`git-cli/build.gradle.kts:16-17`） | ✅ 已实现（值为 draft，M1 以 CI 实际钉选版回写 ⬜） |
 | **exec 打包** | `packaging.jniLibs.useLegacyPackaging = true`（`git-cli/build.gradle.kts:42`） | 物理落盘 `nativeLibraryDir` | exec 型硬要求：不落盘则 `execve` ENOENT；targetSdk≥29 SELinux 禁止从可写数据目录 exec（D1/C1） | ✅ 已实现（落盘效果待 M1-T7 探针 ⬜） |
 | **模块形态** | `:git-cli` Android library，**零 Kotlin/Java 源**（无 `src/` 树） | AAR 容器 | 本仓不含任何嵌入 API（README/规划 §1.1）；✅ 实测 debug AAR 786 B、`classes.jar` 为空 | ✅ 已实现 |
 | **目标 ABI** | 仅 **arm64-v8a**（`abiFilters`，`git-cli/build.gradle.kts:34`；lock `matrix.abi`） | 产物面 | 只发布 AArch64（README/规划 §2） | ✅ 已实现 |
@@ -55,9 +55,9 @@
 
 | 维度 | 值 | 来源 |
 |---|---|---|
-| Maven 坐标 | `io.github.fellow99:git-cli:2.51.0`（**draft**） | `git-cli.lock.json:31-33` + `gradle.properties:7` ✅ |
+| Maven 坐标 | `io.github.fellow99:git-cli:2.56.0`（**draft**） | `git-cli.lock.json:31-33` + `gradle.properties:7` ✅ |
 | 版本语义 | = git 上游版本，独立 semver，无配对 | 规划 §2 / D4 ✅（口径） |
-| draft 钉选 | 2.51.0 为**计划值**；M1 开工时以 CI 实际可构建的最新稳定版钉选并回写（README 同口径） | 规划 §2 ⬜ |
+| draft 钉选 | 2.56.0 为**计划值**；M1 开工时以 CI 实际可构建的最新稳定版钉选并回写（README 同口径） | 规划 §2 ⬜ |
 | minSdk / compileSdk | 24 / 36 | `git-cli/build.gradle.kts:30,32` ✅ |
 | 交叉编译 API | 24（lock `androidApi`；build 脚本 `--api` 默认 24） | `git-cli.lock.json:11` + `scripts/build-git-cli-android.sh:30` ✅ |
 | ABI | arm64-v8a（唯一） | `git-cli/build.gradle.kts:34` ✅ |
@@ -116,7 +116,7 @@
 | 退出码 | 语义 | 实测 |
 |---|---|---|
 | `0` | 门禁全过（--check 含 jniLibs 兄弟文件白名单过） | —（M0 无产物，未出现 0 路径 ⬜） |
-| `2` | 门禁不合格 / **未投放** / SCAFFOLD 未实现（fetch/build 骨架） | ✅ `--check`→2；`fetch --git 2.51.0`→2；`build`（参数齐）→2 |
+| `2` | 门禁不合格 / **未投放** / SCAFFOLD 未实现（fetch/build 骨架） | ✅ `--check`→2；`fetch --git 2.56.0`→2；`build`（参数齐）→2 |
 | `1` | 用法/IO 错误（如 `--out` 缺 `--from`、lock 缺 release、非 ELF） | ✅ `--out foo`（缺 --from）→1 |
 
 ### 6.3 命令速查（与 README「如何构建」同口径）
@@ -125,9 +125,9 @@
 node tools/provision.mjs --check                                                  # 校验已投放产物（未投放=exit 2）
 node tools/provision.mjs --inspect <libgit_cli.so>                                # 对任意文件跑 7 门禁
 node tools/provision.mjs --out git-cli/src/main/jniLibs --from build/out/libgit_cli.so   # 门禁过后幂等投放（M1）
-node scripts/fetch-git-cli-source.mjs --git 2.51.0 --out .dist/src                # M1：四源钉选下载
-bash scripts/build-git-cli-android.sh --git 2.51.0 --api 24 --src .dist/src/git \
+node scripts/fetch-git-cli-source.mjs --git 2.56.0 --out .dist/src                # M1：四源钉选下载
+bash scripts/build-git-cli-android.sh --git 2.56.0 --api 24 --src .dist/src/git \
   --deps .dist/src --ndk "$ANDROID_NDK_HOME" --out build/out                      # M1：交叉编译
 gradle :git-cli:tasks                                                             # 配置期门禁（无 .so 必须过）
-gradle :git-cli:assembleDebug -PCLI_VERSION=2.51.0                                # AAR 容器产出
+gradle :git-cli:assembleDebug -PCLI_VERSION=2.56.0                                # AAR 容器产出
 ```

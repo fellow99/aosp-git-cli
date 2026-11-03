@@ -22,7 +22,7 @@ The artifact version = the git upstream version. No pairing with other repos.
 
 | Version | Status | Link |
 |---|---|---|
-| 2.51.0 | ⬜ draft (after the first M1 build; the CI-pinned git version prevails) | — |
+| 2.56.0 | ⬜ draft (after the first M1 build; the CI-pinned git version prevails) | — |
 
 ## Build profile (key points)
 
@@ -35,7 +35,7 @@ The artifact version = the git upstream version. No pairing with other repos.
 
 ```kotlin
 dependencies {
-    runtimeOnly("io.github.fellow99:git-cli:2.51.0") // independent version, not paired with the node family
+    runtimeOnly("io.github.fellow99:git-cli:2.56.0") // independent version, not paired with the node family
 }
 ```
 
@@ -52,8 +52,8 @@ Terminal side: `PATH` points at `nativeLibraryDir`; `GIT_CONFIG_GLOBAL=$HOME/.gi
 ## How to build (000-scaffold skeleton; real pipeline lands in M1)
 
 ```bash
-node scripts/fetch-git-cli-source.mjs --git 2.51.0 --out .dist/src   # M1
-bash scripts/build-git-cli-android.sh --git 2.51.0 --api 24 \
+node scripts/fetch-git-cli-source.mjs --git 2.56.0 --out .dist/src   # M1
+bash scripts/build-git-cli-android.sh --git 2.56.0 --api 24 \
   --src .dist/src/git --deps .dist/src --ndk "$ANDROID_NDK_HOME" --out build/out  # M1
 node tools/provision.mjs --out git-cli/src/main/jniLibs --from build/out/libgit_cli.so
 node tools/provision.mjs --check

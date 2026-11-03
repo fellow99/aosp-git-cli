@@ -119,6 +119,14 @@ mkdir -p "$OUT"
 DEPS_OUT="$OUT/deps"
 mkdir -p "$DEPS_OUT"
 
+# 参数漂移防护：API/NDK/ABI 变化 ⇒ 旧阶段产物不可复用，强制重建（评审 Minor-10）
+BUILD_PARAMS="$ARCH/$API/$(basename "$NDK")/$HOST_TAG"
+if [[ -f "$OUT/BUILD-PARAMS.txt" && "$(cat "$OUT/BUILD-PARAMS.txt")" != "$BUILD_PARAMS" && "$FORCE" -eq 0 ]]; then
+  say "⚠ 构建参数变化（$(cat "$OUT/BUILD-PARAMS.txt") → $BUILD_PARAMS）：忽略阶段缓存，全量重建"
+  FORCE=1
+fi
+echo "$BUILD_PARAMS" > "$OUT/BUILD-PARAMS.txt"
+
 stage_done() { [[ -f "$1" && "$FORCE" -eq 0 ]]; }
 le_stage() { echo "── $1 ───────────────────────────────────────────"; }
 
@@ -186,7 +194,7 @@ if [[ ! "$STAGE" < "S2" ]]; then
       && ANDROID_NDK_ROOT="$NDK" ANDROID_API="$API" perl Configure android-arm64 no-shared no-tests \
          -fPIC -O2 --libdir=lib --prefix="$DEPS_OUT/openssl" \
          CC="$CC" ) || die "openssl Configure 失败（R7：可试 no-asm 降级）"
-    ( cd "$DEPS/openssl" && "$MAKE" ${MAKEFLAGS_SHELL:-} -j"$JOBS" build_sw ) || die "openssl make 失败"
+    ( cd "$DEPS/openssl" && "$MAKE" ${MAKEFLAGS_SHELL:-} -j"$JOBS" build_sw 2>&1 | tee "$OUT/openssl-build.log" ) || { tail -20 "$OUT/openssl-build.log"; die "openssl make 失败"; }
     ( cd "$DEPS/openssl" && "$MAKE" install_sw install_ssldirs >/dev/null ) || die "openssl install 失败"
     [[ -f "$DEPS_OUT/openssl/lib/libssl.a" && -f "$DEPS_OUT/openssl/lib/libcrypto.a" ]] || die "openssl .a 未产出"
     say "✔ libssl.a + libcrypto.a（$(du -h "$DEPS_OUT/openssl/lib/libcrypto.a" | cut -f1)）"
@@ -298,7 +306,7 @@ if [[ ! "$STAGE" < "S5" ]]; then
     say "✔ S5 缓存命中（git 二进制已存在）"
   else
     ( cd "$GITDIR" && "$MAKE" ${MAKEFLAGS_SHELL:-} -j"$JOBS" uname_S=Linux uname_O=Unix \
-        NO_LINT=1 ) || die "git make 失败（检查 config.mak 与依赖 .a）"
+        NO_LINT=1 2>&1 | tee "$OUT/git-make.log" ) || { tail -30 "$OUT/git-make.log"; die "git make 失败（检查 config.mak 与依赖 .a）"; }
     [[ -x "$GITDIR/git" ]] || die "git 主二进制未产出"
     say "✔ git（$(du -h "$GITDIR/git" | cut -f1)，未 strip）"
   fi

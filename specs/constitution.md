@@ -61,9 +61,9 @@
   ① `ET_DYN`（PIE）；② **PT_INTERP 恰 1 个且 = `/system/bin/linker64`**；③ `e_machine = AArch64`；
   ④ **DT_NEEDED ⊆ lock `matrix.allowedNeeded` 白名单**（静态链入后只允许系统库）；
   ⑤ SHA-256 与锁一致；⑥ 大小与锁一致；⑦ **16KB 页对齐**（min LOAD align ≥ 0x4000）；
-- draft 期 ⑤⑥ **只记录不比对**（无锁值即无谎报）；released 后比对为硬条件；
-- jniLibs 兄弟文件纪律：当前只放行单一 `libgit_cli.so`；`libnode.so` **禁入**（由 node-runtime 统一供给）；
-  helper 白名单扩展属 M1（规划 §5.3）；
+- draft 期 ⑤⑥ **只记录不拦截**（无锁值不谎报；首个真实构建后锁值为 CI 钉选参考值，失配打 ⚠ 但放行——产物不必比特级可复现）；**released 后 ⑤⑥ 硬比对**（实现：`provision.mjs` enforceHash= status==='released'）；
+- jniLibs 兄弟文件纪律：白名单 = lock `matrix.jniLibsWhitelist`（首个真实构建起为 `libgit_cli.so` + helper 集，
+  规划 §10.3）；`libnode.so` **禁入**（由 node-runtime 统一供给）；
 - `--allow-page-align-4k` 是唯一放行开关，**仅限 bring-up**，输出必须打 ⚠ 警示，上架/16KB 设备不合格。
 
 依据：规划 §6/§12 · `tools/provision.mjs:9-24`（文件头差异说明）· `:146-167`（门禁实现）· `:222-228`（兄弟文件检查）。

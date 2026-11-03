@@ -18,13 +18,13 @@
 | 交叉编译侧 | NDK（r28c+，与 aosp-node-runtime 对齐 ⬜）· Android API 24（默认）· arm64-v8a | ⬜ M1（lock `androidApi:24` ✅ 已锁） |
 | CI runner | `ubuntu-24.04`（M0）；M1 追加 autoconf/make/gcc/curl/file/tar/xz/ccache（规划 §9） | ✅ / ⬜ |
 | 消费侧 | 终端 App（node-pty 宿主）；targetSdk≥29 ⇒ SELinux C1（nativeLibraryDir 是唯一合规执行位） | 🔶 工作区 §2 硬约束 |
-| 坐标 | `io.github.fellow99:git-cli:<CLI_VERSION>`；当前 2.51.0（draft） | `gradle.properties:7` + lock ✅ |
+| 坐标 | `io.github.fellow99:git-cli:<CLI_VERSION>`；当前 2.56.0（draft） | `gradle.properties:7` + lock ✅ |
 
 ### 1.2 关键依赖与锁定
 
 | 依赖 | 版本/标识 | 锁定位置 | 状态 |
 |---|---|---|---|
-| git 源码包 | `github.com/git/git` releases `git-<ver>.tar.gz`；draft 2.51.0，M1 钉选回写 | `lock.builtFrom.source` | ⬜（现为文本描述） |
+| git 源码包 | `github.com/git/git` releases `git-<ver>.tar.gz`；draft 2.56.0，M1 钉选回写 | `lock.builtFrom.source` | ⬜（现为文本描述） |
 | zlib / libcurl / OpenSSL | 官方源码包，各 M1 钉版 + sha256 | `lock.builtFrom.deps`（M1 升级为版本表） | ⬜ |
 | CA bundle | cURL 来源 `cacert.pem`，钉版 + sha256 | assets manifest（M1） | ⬜ |
 | NDK | r28c 或更高 | `lock.builtFrom.ndk`（现 `TBD`） | ⬜ |

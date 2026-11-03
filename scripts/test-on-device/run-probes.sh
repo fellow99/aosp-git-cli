@@ -239,12 +239,14 @@ run_case() { # <id>
 }
 
 run_16k_core() {
-  # 16KB 设备：复跑核心链 01/05/06/09（结果并入 17 记录）
+  # 16KB 设备：复跑核心链 01/05/06/09（--case 过滤下组件用例会被滤掉，临时清空 filter）
+  local saved_filter="$CASE_FILTER"; CASE_FILTER=""
   local ok=1
   for c in TC-003-01 TC-003-05 TC-003-06 TC-003-09; do
     run_case "$c"
     [[ "${RESULTS[-1]}" == *"PASS"* ]] || ok=0
   done
+  CASE_FILTER="$saved_filter"
   [[ $ok -eq 1 ]] && record "TC-003-17" PASS "16KB 页设备核心链复跑通过" || record "TC-003-17" FAIL "16KB 核心链有失败项"
 }
 

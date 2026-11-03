@@ -22,9 +22,9 @@ aosp-git-cli/                            # node-bridge-workspace 的子目录；
 ├── README_zh.md                         # ✅ 67 行；中文总览（与 README.md 同构）
 ├── docs/
 │   └── 000-工程规划.md                   # ★ 379 行；唯一规划基线（v2.0；D1–D7 决策、M1/M2 实现设计、探针 P1–P7、风险 R1–R11）
-├── git-cli.lock.json                    # ★ 53 行；唯一事实源（C2）：active 2.51.0/arm64-v8a · releases[0] draft · matrix（allowedNeeded/execPackaging）
+├── git-cli.lock.json                    # ★ 53 行；唯一事实源（C2）：active 2.56.0/arm64-v8a · releases[0] draft · matrix（allowedNeeded/execPackaging）
 ├── settings.gradle.kts                  # ✅ 21 行；rootProject.name=aosp-git-cli；仅 include(":git-cli")；vanniktech 0.37.0 pluginManagement
-├── gradle.properties                    # ✅ 19 行；CLI_VERSION=2.51.0（draft）；RELEASE=false；GROUP/POM_* 公共元数据
+├── gradle.properties                    # ✅ 19 行；CLI_VERSION=2.56.0（draft）；RELEASE=false；GROUP/POM_* 公共元数据
 ├── gradle.properties.local.example      # ✅ 8 行；用户级凭据模板（Central Portal Token / GPG），真值文件不入库（C5）
 ├── gradle/libs.versions.toml            # ✅ 5 行；AGP 9.2.1（唯一 version 条目）
 ├── publish.gradle.kts                   # ✅ 139 行；发布面共享配置（coordinates/Central Portal/签名/singleVariant/SCM 补丁/RELEASE 门禁）
@@ -66,10 +66,10 @@ aosp-git-cli/                            # node-bridge-workspace 的子目录；
 |---|---|---|---|
 | `settings.gradle.kts` | 工程 | `rootProject.name = "aosp-git-cli"`（:20）；`include(":git-cli")`（:21）；pluginManagement 加载 `com.vanniktech.maven.publish.base` **0.37.0**（:3）；`FAIL_ON_PROJECT_REPOS`（:13） | §2 |
 | `gradle/libs.versions.toml` | 工程 | `agp = "9.2.1"`（:2）；唯一插件别名 `android-library`（:5） | — |
-| `gradle.properties` | 工程 | `CLI_VERSION=2.51.0`（:7，draft 计划版本）；`RELEASE=false`（:19）；`GROUP/POM_NAME/POM_DESCRIPTION/POM_URL/POM_LICENCE/POM_SCM/POM_DEVELOPER`（:2-16）；⚠️ `VERSION_NAME=0.1.0`（:3）为本仓**无读取方**的模板残留（见 §5） | §2/§10.1 |
+| `gradle.properties` | 工程 | `CLI_VERSION=2.56.0`（:7，draft 计划版本）；`RELEASE=false`（:19）；`GROUP/POM_NAME/POM_DESCRIPTION/POM_URL/POM_LICENCE/POM_SCM/POM_DEVELOPER`（:2-16）；⚠️ `VERSION_NAME=0.1.0`（:3）为本仓**无读取方**的模板残留（见 §5） | §2/§10.1 |
 | `git-cli/build.gradle.kts` | 模块 | `version` 强制取 `CLI_VERSION` 属性，缺失即 error（:16-17）；afterEvaluate 反射覆写 publication version（:19-26）；`namespace`（:29）/`compileSdk = 36`（:30）/`minSdk = 24`（:32）/`abiFilters += "arm64-v8a"`（:34）；`packaging.jniLibs.useLegacyPackaging = true`（:42） | §D1/§D4 |
 | `publish.gradle.kts` | 发布 | coordinates `io.github.fellow99` + `project.name` + `CLI_VERSION`（:36-39）；`publishToMavenCentral(false, NONE)`（:42-56，`AUTOMATIC_RELEASE=true` 才 PUBLISHED）；`signAllPublications`（:57）；singleVariant `release + SourcesJar`（:58-69）；GPG 凭据仅用户级（:75-113）；POM `<scm><url>` 补丁（:115-131）；`RELEASE=true && Token 齐` 才启用 sign/publish 任务（:133-139） | §10.1/§12 |
-| `git-cli.lock.json` | 事实源 | `active{2.51.0, arm64-v8a}`；`releases[0]`：`androidApi:24`、`name:libgit_cli.so`、`size:0`、`sha256:""`、`status:"draft"`、`mavenCentral.published:false`；`builtFrom.deps` 为**文本描述**（版本表 M1-T1 升级 ⬜）；`matrix.allowedNeeded` 5 项（libc/libm/libdl/libz/liblog）+ `execPackaging` 说明 | §8 |
+| `git-cli.lock.json` | 事实源 | `active{2.56.0, arm64-v8a}`；`releases[0]`：`androidApi:24`、`name:libgit_cli.so`、`size:0`、`sha256:""`、`status:"draft"`、`mavenCentral.published:false`；`builtFrom.deps` 为**文本描述**（版本表 M1-T1 升级 ⬜）；`matrix.allowedNeeded` 5 项（libc/libm/libdl/libz/liblog）+ `execPackaging` 说明 | §8 |
 | `.gitignore` | 仓库 | 构建产物（:1-15）+ 密钥材料（:17-20）+ **`git-cli/src/main/jniLibs/**/*.so`、`git-cli/src/main/assets/**`**（:22-24）+ `.dist/`、`build/out/`（:26-28） | C3 |
 | `.github/workflows/build-git-cli-android.yml` | CI | 触发 push(main)/PR/dispatch（:7-11）；`permissions: contents: read`（:13-14）；JDK 21 temurin（:23-27）；Gradle **9.4.1**（:29-32）；`gradle :git-cli:tasks`（:35，无 .so 必须可配置）；`node tools/provision.mjs --check` 退出码必须 **= 2**（:37-45，⚠️ `bash -e` 下断言分支不可达，见 plan.md §7 缺陷登记）；`node --check` ×2 + `bash -n`（:47-50） | FR-000-040~042 |
 

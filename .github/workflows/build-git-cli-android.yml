@@ -19,7 +19,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}   # tag（Release）构建不被取消
 
 env:
   NDK_VERSION: 28.2.13676358
@@ -30,7 +30,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     permissions:
-      contents: write   # tag 触发时创建 Release（非 tag 无 release 步骤，见 if:）
+      # 仅 tag（Release 路径）需要写；普通 push/PR 只读（发布卫生 C5 收紧）
+      contents: ${{ github.ref_type == 'tag' && 'write' || 'read' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -159,6 +160,26 @@ jobs:
           ( cd dist-archive && sha256sum "${STAGE}.tar.gz" > "${STAGE}.tar.gz.sha256" )
           cp git-cli/build/outputs/aar/git-cli-release.aar "dist-archive/${STAGE}-aar.aar" 2>/dev/null || true
 
+      - name: lock 回写工件（FR-002-015：机器可读，随 artifact 分发；draft→released 提交由维护者核验后执行）
+        if: github.ref_type == 'tag'
+        run: |
+          node -e "
+          const fs=require('fs');
+          const lock=JSON.parse(fs.readFileSync('git-cli.lock.json','utf8'));
+          const rel=lock.releases.find(x=>x.version===lock.active.version);
+          rel.size=fs.statSync('build/out/jni/'+rel.name).size;
+          rel.sha256=require('crypto').createHash('sha256').update(fs.readFileSync('build/out/jni/'+rel.name)).digest('hex');
+          rel.gates={\$comment:'回写工件：维护者核验后以本条目覆盖 lock 并置 status=released（C2 单向）',
+            eTypeEtDyn:true,ptInterpSystemLinker:true,eMachineAArch64:true,neededWhitelist:true,sha256Match:true,sizeMatch:true,pageAlign16k:true};
+          rel.status='released';
+          fs.writeFileSync('dist-archive/lock-writeback.json',JSON.stringify({release:rel,helperHashes:Object.fromEntries(
+            Object.entries(rel.builtFrom.helpers||{}).map(([k])=>[k,{sha256:require('crypto').createHash('sha256').update(fs.readFileSync('build/out/jni/'+k)).digest('hex'),size:fs.statSync('build/out/jni/'+k).size}])
+          )},null,2)+'\n');
+          console.log('lock-writeback.json 已生成');
+          "
+          echo "## lock 回写清单" >> "$GITHUB_STEP_SUMMARY"
+          cat dist-archive/lock-writeback.json >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -176,17 +197,6 @@ jobs:
             build/build-*.log
           if-no-files-found: ignore
 
-
-      - name: lock 回写提示（draft→released 由维护者核验后提交，C2 单向；FR-002-015）
-        if: github.ref_type == 'tag'
-        run: |
-          echo "## lock 回写清单（人工核验后提交）" >> "$GITHUB_STEP_SUMMARY"
-          node -e "
-          const fs=require('fs');
-          for (const f of require('fs').readdirSync('build/out/jni')) {
-            const h=require('crypto').createHash('sha256').update(fs.readFileSync('build/out/jni/'+f)).digest('hex');
-            console.log('- \`'+f+'\`: sha256='+h+' size='+fs.statSync('build/out/jni/'+f).size);
-          }" >> "$GITHUB_STEP_SUMMARY"
 
       - name: GitHub Release（仅 tag；FR-002-014/016）
         if: github.ref_type == 'tag'

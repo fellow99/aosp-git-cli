@@ -17,7 +17,7 @@
 | TC-002-09 | assets 可执行位负例 | L1 | 002-004 | TC-002-08 | `chmod +x` 任一 assets 文件再校验 | exit 2；指出文件 | ⬜ |
 | TC-002-10 | assets 篡改负例 | L1 | 002-004 | TC-002-08 | 改任一文件 1 字节再校验 | exit 2；sha256 失配 | ⬜ |
 | TC-002-11 | assets 含 .so 负例 | L1 | 002-004 | TC-002-08 | 塞入 `.so` 再校验 | exit 2 | ⬜ |
-| TC-002-12 | 幂等复测 | L1 | 002-005 | TC-002-01/08 | 重复 `--out` + `--assets` | exit 0；目录/元数据内容一致（provisionedAt 除外） | ⬜ |
+| TC-002-12 | 幂等复测 | L1 | 002-005 | TC-002-01/08 | 重复 `--out` + `--assets` | exit 0；目录/元数据内容一致（`provisionedAt` 与 assets 内 `manifest.json` 的 `generatedAt` 时间戳字段除外） | ⬜ |
 | TC-002-13 | 元数据扩展 | L1 | 002-005 | TC-002-01 | 读 `META-INF/git-cli.properties` | 含 helpers 与 deps 行；字段与 lock 一致 | ⬜ |
 | TC-002-14 | 退出码契约复核 | L1 | 002-006 | — | `--out foo`（缺 from）=1；未投放 `--check`=2；全过=0 | 三码逐一对上 | ⬜ |
 | TC-002-15 | 门禁七项负例（TC-000-09 转正） | L1 | 002-001 | — | `--inspect` 各构造件：非 ELF / ET_EXEC / x86 / 4K 对齐 / interp 错 | 各自对应门禁 ✘ 且 exit 2 | ⬜ |
