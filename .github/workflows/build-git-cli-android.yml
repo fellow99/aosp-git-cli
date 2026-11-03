@@ -19,7 +19,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref_type != 'tag' }}   # tag（Release）构建不被取消
+  cancel-in-progress: true
 
 env:
   NDK_VERSION: 28.2.13676358
@@ -30,8 +30,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     permissions:
-      # 仅 tag（Release 路径）需要写；普通 push/PR 只读（发布卫生 C5 收紧）
-      contents: ${{ github.ref_type == 'tag' && 'write' || 'read' }}
+      contents: write   # 仅 Release 步骤需要（if: github.ref_type == 'tag' 门禁）；非 tag 运行不执行任何写步骤
     steps:
       - uses: actions/checkout@v4
 
