@@ -158,6 +158,18 @@ jobs:
           name: git-cli-dist
           path: dist-archive/
 
+      - name: Upload build logs（失败时排障）
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            build/out/curl-cmake-configure.log
+            build/out/curl-cmake-build.log
+            build/build-*.log
+          if-no-files-found: ignore
+
+
       - name: lock 回写提示（draft→released 由维护者核验后提交，C2 单向；FR-002-015）
         if: github.ref_type == 'tag'
         run: |

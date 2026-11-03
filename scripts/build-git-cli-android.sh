@@ -193,29 +193,53 @@ if [[ ! "$STAGE" < "S2" ]]; then
   fi
 fi
 
-# ══ S3 curl（产物 libcurl.a）════════════════════════════════════════════════
+# ══ S3 curl（产物 libcurl.a；CMake + NDK toolchain 路线）═════════════════════
+# 注：autotools/libtool 路线在 MSYS（Windows make.exe 转发）下断裂（"C:/Program: No such file"），
+#     改用 CMake + NDK 官方 toolchain file（Windows/Linux 同口径；plan §3.2 回写）。
 if [[ ! "$STAGE" < "S3" ]]; then
   le_stage "S3 curl"
   CURL_A="$DEPS_OUT/curl/lib/libcurl.a"
   if stage_done "$CURL_A"; then
     say "✔ S3 缓存命中（$CURL_A）"
   else
-    say "configure curl（交叉静态，--without-* 裁剪，R8）"
-    ( cd "$DEPS/curl" \
-      && CC="$CC" CFLAGS="$CFLAGS_COMMON" LDFLAGS="$LDFLAGS_16K" \
-         AR="$AR" RANLIB="$RANLIB" \
-         ./configure --host=aarch64-linux-android --prefix="$DEPS_OUT/curl" \
-           --disable-shared --enable-static --with-pic \
-           --with-openssl="$DEPS_OUT/openssl" --with-zlib="$DEPS_OUT/zlib" \
-           --without-libpsl --without-brotli --without-zstd --without-libidn2 \
-           --disable-ldap --disable-ldaps --disable-rtsp --disable-dict \
-           --disable-telnet --disable-tftp --disable-ftp --disable-file \
-           --disable-imap --disable-pop3 --disable-smtp --disable-gopher \
-           --enable-http --enable-https --enable-proxy ) || die "curl configure 失败（R8）"
-    ( cd "$DEPS/curl" && "$MAKE" ${MAKEFLAGS_SHELL:-} -j"$JOBS" ) || die "curl make 失败"
-    ( cd "$DEPS/curl" && "$MAKE" install >/dev/null ) || die "curl install 失败"
-    [[ -f "$DEPS_OUT/curl/lib/libcurl.a" ]] || die "libcurl.a 未产出"
-    say "✔ libcurl.a（$(du -h "$DEPS_OUT/curl/lib/libcurl.a" | cut -f1)）"
+    # cmake 定位：pip 装的 cmake（Windows）或系统 cmake（CI）
+    CMAKE_BIN="$(command -v cmake || true)"
+    if [[ -z "$CMAKE_BIN" ]]; then
+      CMAKE_BIN="$(python -c "import cmake,os;print(os.path.join(os.path.dirname(cmake.__file__),'data','bin','cmake.exe'))" 2>/dev/null || true)"
+    fi
+    [[ -n "$CMAKE_BIN" && -x "$CMAKE_BIN" ]] || die "缺 cmake（pip install cmake 或系统安装）"
+    say "cmake: $CMAKE_BIN"
+    case "$ARCH" in
+      arm64-v8a) CMAKE_ABI="arm64-v8a";;
+      x86_64) CMAKE_ABI="x86_64";;
+    esac
+    CURL_BUILD="$DEPS_OUT/curl-build"
+    "$CMAKE_BIN" -S "$DEPS/curl" -B "$CURL_BUILD" -G "Unix Makefiles" \
+      -DCMAKE_MAKE_PROGRAM="$MAKE" \
+      -DCMAKE_TOOLCHAIN_FILE="$NDK/build/cmake/android.toolchain.cmake" \
+      -DANDROID_ABI="$CMAKE_ABI" -DANDROID_PLATFORM="android-$API" \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF \
+      -DCMAKE_INSTALL_PREFIX="$DEPS_OUT/curl" \
+      -DCURL_USE_OPENSSL=ON -DOPENSSL_ROOT_DIR="$DEPS_OUT/openssl" \
+      -DOPENSSL_CRYPTO_LIBRARY="$DEPS_OUT/openssl/lib/libcrypto.a" \
+      -DOPENSSL_SSL_LIBRARY="$DEPS_OUT/openssl/lib/libssl.a" \
+      -DOPENSSL_INCLUDE_DIR="$DEPS_OUT/openssl/include" \
+      -DZLIB_LIBRARY="$DEPS_OUT/zlib/libz.a" -DZLIB_INCLUDE_DIR="$DEPS/zlib" \
+      -DCURL_USE_MBEDTLS=OFF -DCURL_USE_WOLFSSL=OFF -DCURL_USE_GNUTLS=OFF \
+      -DCURL_USE_LIBPSL=OFF -DCURL_BROTLI=OFF -DCURL_ZSTD=OFF -DUSE_LIBIDN2=OFF \
+      -DCURL_DISABLE_LDAP=ON -DCURL_DISABLE_LDAPS=ON \
+      -DCURL_DISABLE_FTP=ON -DCURL_DISABLE_FILE=ON -DCURL_DISABLE_TELNET=ON \
+      -DCURL_DISABLE_TFTP=ON -DCURL_DISABLE_RTSP=ON -DCURL_DISABLE_DICT=ON \
+      -DCURL_DISABLE_IMAP=ON -DCURL_DISABLE_POP3=ON -DCURL_DISABLE_SMTP=ON \
+      -DCURL_DISABLE_GOPHER=ON -DCURL_DISABLE_SMB=ON \
+      -DCURL_DISABLE_TESTS=ON -DENABLE_UNIX_SOCKETS=ON \
+      > "$OUT/curl-cmake-configure.log" 2>&1 || { tail -20 "$OUT/curl-cmake-configure.log"; die "curl cmake configure 失败（R8）"; }
+    "$CMAKE_BIN" --build "$CURL_BUILD" -j "$JOBS" > "$OUT/curl-cmake-build.log" 2>&1 \
+      || { tail -20 "$OUT/curl-cmake-build.log"; die "curl cmake build 失败"; }
+    "$CMAKE_BIN" --install "$CURL_BUILD" > /dev/null || die "curl install 失败"
+    [[ -f "$CURL_A" ]] || die "libcurl.a 未产出"
+    say "✔ libcurl.a（$(du -h "$CURL_A" | cut -f1)，CMake 路线）"
   fi
 fi
 
@@ -231,16 +255,32 @@ RANLIB = $RANLIB
 STRIP = $STRIP
 CFLAGS = $CFLAGS_COMMON
 LDFLAGS = $LDFLAGS_16K
-EXTRA_CFLAGS = -I$DEPS_OUT/openssl/include -I$DEPS_OUT/zlib -I$DEPS_OUT/curl/include
+# 依赖注入（git Makefile 真实变量：BASIC_CFLAGS/CURL_CFLAGS/CURL_LDFLAGS/OPENSSLDIR/BASIC_LDFLAGS）
+BASIC_CFLAGS += -I$DEPS_OUT/openssl/include -I$DEPS/zlib -I$DEPS_OUT/curl/include
+BASIC_LDFLAGS += -L$DEPS_OUT/openssl/lib -L$DEPS_OUT/zlib -L$DEPS_OUT/curl/lib
+CURL_CFLAGS = -I$DEPS_OUT/curl/include
 CURL_LDFLAGS = -L$DEPS_OUT/curl/lib -lcurl
-OPENSSL_LDFLAGS = -L$DEPS_OUT/openssl/lib -lssl -lcrypto
-ZLIB_LDFLAGS = -L$DEPS_OUT/zlib -lz
+OPENSSLDIR = $DEPS_OUT/openssl
 NO_TCLTK = YesPlease
 NO_GETTEXT = YesPlease
 NO_ICONV = YesPlease
 NO_REGEX = YesPlease
 NO_PERL = YesPlease
 NO_PYTHON = YesPlease
+NO_EXPAT = YesPlease
+# git 2.56 引入 Rust 子系统（libgitcore）；NDK 交叉 cargo 工具链不在本线范围，D3 缺项关闭
+NO_RUST = YesPlease
+# bionic pthread 全在 libc（无独立 libpthread；NDK 无 -lpthread 可链）
+PTHREAD_LIBS =
+# bionic<28 无 getrandom()（API 24）；随机源走 /dev/urandom 默认路径
+CSPRNG_METHOD = DEFAULT
+# uname_S=Linux 块带入的 glibc 特性在 bionic 缺席（config.mak 后包含，覆盖为空即关闭）
+HAVE_SYNC_FILE_RANGE =
+# 宿主 HOME 为 Windows 路径会经 prefix 污染 C 字符串宏（\U 非法转义）；运行期由 GIT_EXEC_PATH 农场提供
+prefix = /usr
+# bionic 无线程取消 API（pthread_setcancelstate/PTHREAD_CANCEL_DISABLE 未声明；git 仅作防护性调用，
+# 恒为空操作语义）——编译期 compat 宏，不改源码（C1：与 NO_* 同类的配置关闭）
+BASIC_CFLAGS += -DPTHREAD_CANCEL_DISABLE=0 '-Dpthread_setcancelstate(state,oldstate)=0'
 NO_INSTALL_HARDLINKS = YesPlease
 NO_CROSS_DIRECTORY_HARDLINKS = YesPlease
 INSTALL_SYMLINKS = YesPlease
