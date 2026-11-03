@@ -70,10 +70,14 @@ jobs:
           sudo apt-get install -y --no-install-recommends make gcc perl tar xz-utils file ccache
           # autoconf 不强制：git 走 config.mak 直写路线（001 plan §3.3）
 
-      - name: Set up Android NDK ${{ env.NDK_VERSION }}
-        uses: android-actions/setup-android@v3
-      - run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}" >/dev/null
-      - run: echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/${{ env.NDK_VERSION }}" >> "$GITHUB_ENV"
+      - name: Install Android NDK ${{ env.NDK_VERSION }}（runner 预装 SDK + sdkmanager）
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME（预装）"
+          if [ ! -d "$ANDROID_HOME/ndk/$NDK_VERSION" ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$NDK_VERSION" > /dev/null
+          fi
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$NDK_VERSION" >> "$GITHUB_ENV"
 
       - name: 配置期门禁（无 .so 必须可配置；FR-002-020 不回归）
         run: gradle :git-cli:tasks --console=plain
