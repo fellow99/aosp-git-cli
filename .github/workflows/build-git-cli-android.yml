@@ -105,7 +105,7 @@ jobs:
           path: |
             .dist/dl
             build/out/deps
-          key: dist-${{ env.GIT_VERSION }}-${{ hashFiles('scripts/fetch-git-cli-source.mjs') }}
+          key: dist-${{ env.GIT_VERSION }}-${{ hashFiles('scripts/fetch-git-cli-source.mjs') }}-${{ hashFiles('scripts/build-git-cli-android.sh') }}
 
       - name: fetch 五输入（钉选 + sha256，FR-001-001~006）
         run: node scripts/fetch-git-cli-source.mjs --git "$GIT_VERSION"

@@ -181,9 +181,9 @@ if [[ ! "$STAGE" < "S2" ]]; then
         say "✔ $m"
       done
     fi
-    say "Configure openssl android-arm64（no-shared no-tests）"
+    say "Configure openssl android-arm64（no-shared no-tests；ANDROID_API=$API 对齐 minSdk，防产物引用 API>minSdk 符号）"
     ( cd "$DEPS/openssl" \
-      && ANDROID_NDK_ROOT="$NDK" perl Configure android-arm64 no-shared no-tests \
+      && ANDROID_NDK_ROOT="$NDK" ANDROID_API="$API" perl Configure android-arm64 no-shared no-tests \
          -fPIC -O2 --libdir=lib --prefix="$DEPS_OUT/openssl" \
          CC="$CC" ) || die "openssl Configure 失败（R7：可试 no-asm 降级）"
     ( cd "$DEPS/openssl" && "$MAKE" ${MAKEFLAGS_SHELL:-} -j"$JOBS" build_sw ) || die "openssl make 失败"
@@ -259,7 +259,8 @@ LDFLAGS = $LDFLAGS_16K
 BASIC_CFLAGS += -I$DEPS_OUT/openssl/include -I$DEPS/zlib -I$DEPS_OUT/curl/include
 BASIC_LDFLAGS += -L$DEPS_OUT/openssl/lib -L$DEPS_OUT/zlib -L$DEPS_OUT/curl/lib
 CURL_CFLAGS = -I$DEPS_OUT/curl/include
-CURL_LDFLAGS = -L$DEPS_OUT/curl/lib -lcurl
+# 静态链接闭包：libcurl.a 的 SSL_*/EVP_*/zlib 符号必须由后续 -lssl -lcrypto -lz 供出
+CURL_LDFLAGS = -L$DEPS_OUT/curl/lib -lcurl -L$DEPS_OUT/openssl/lib -lssl -lcrypto -L$DEPS_OUT/zlib -lz
 OPENSSLDIR = $DEPS_OUT/openssl
 NO_TCLTK = YesPlease
 NO_GETTEXT = YesPlease
