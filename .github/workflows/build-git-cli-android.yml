@@ -36,10 +36,13 @@ jobs:
 
       - name: Resolve version（tag/dispatch 与 lock active 一致性，FR-002-014）
         run: |
-          LOCK_VER="$(node -e "console.log(require('./git-cli.lock.json').active.version)")"
-          TAG_VER="${GITHUB_REF_NAME#v}"
-          IN_VER="${{ github.event.inputs.gitVersion }}"
-          WANT="${IN_VER:-$TAG_VER}"
+          LOCK_VER="$(node -p "require('./git-cli.lock.json').active.version")"
+          WANT=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            WANT="${{ github.event.inputs.gitVersion }}"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            WANT="${GITHUB_REF_NAME#v}"
+          fi
           if [ -n "$WANT" ] && [ "$WANT" != "$LOCK_VER" ]; then
             echo "版本不一致：触发=$WANT vs lock=$LOCK_VER（改 lock 再打 tag，C2）"; exit 1
           fi
