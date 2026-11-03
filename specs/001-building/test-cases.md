@@ -27,4 +27,13 @@
 
 ## 执行记录
 
-- ⬜ 首轮执行后回填（日期、环境、逐条结果、偏差说明）。
+**首轮（2026-11-03，GitHub Actions run 41573860213 @ 65118fa，ubuntu-24.04 + NDK 28.2.13676358；另有本机 Windows git-bash 分步验证）**：
+
+- TC-001-01/02 ✅：fetch 五输入钉选下载 + 幂等（缓存命中跳过；本机复跑二次验证）。TC-001-03 ✅（负例改为**自愈语义**：缓存损坏 ⇒ 删缓存自动重下，exit 0+「sha256 一致」；实施语义与用例表原判据 exit 2 有偏差，用例表按实施语义更新）。TC-001-04 ✅ `--git 9.9.9` exit 2。TC-001-05 ✅ lock.builtFrom 版本表回写（git 2.56.0/zlib 1.3.1/openssl 3.5.9/curl 8.23.0）。
+- TC-001-06/07/08 ✅：libz.a(128K)/libssl.a+libcrypto.a/libcurl.a(11M, CMake 路线) 全静态、无 .so（CI 日志 S1–S3）。
+- TC-001-09/10 ✅：libgit_cli.so + libgit_remote_curl.so（+裁剪观察品 libgit_http_fetch.so）七门禁全 ✔（NEEDED=[libdl.so,libc.so]⊆白名单；min LOAD align=0x4000）。
+- TC-001-11 ✅：helper-inventory.json 401 条目（git 源树顶层 ELF 全集，含测试工具；随包集=cli+remote_curl，http_fetch 裁剪观察）。TC-001-13 ✅ 命名映射 libgit_*.so。TC-001-14 ✅ gitexec-manifest 8 条 farm。TC-001-15 ✅ assets 纯数据（provision ✔）。
+- TC-001-12 ✅/⚠：strip 后 cli 3,993,328B + remote_curl 8,450,536B ≈ 12.4MB，**超出 10MB 预算（R6）**——如实登记，后续裁剪候选（no-tests openssl、curl 协议再裁、UPX 类方案不在纪律内不采用）。
+- TC-001-16 ✅ BUILD/FETCH-METADATA 归档入 artifact。TC-001-17 ⬜ 可复现（同输入二次构建未跑）。TC-001-18 ✅ fetch 每次校验官方 sha256，源树无补丁。
+
+**偏差登记**：① openssl `android-arm64` target 需显式 `ANDROID_API=$API`（否则选最新 API 的 wrapper，产物可能引用 API>minSdk 符号）——已固化脚本；② git 2.56 引入 Rust 子系统 ⇒ `NO_RUST`；③ bionic 需要 pthread 取消 API 空操作宏 / PTHREAD_LIBS= / CSPRNG=DEFAULT / prefix=/usr（D3 配置关闭族，回写 plan.md §3.3）。

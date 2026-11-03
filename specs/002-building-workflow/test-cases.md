@@ -29,4 +29,11 @@
 
 ## 执行记录
 
-- ⬜ 首轮执行后回填（日期、环境、逐条结果、偏差说明）。
+**首轮（2026-11-03，GitHub Actions run 41573860213 @ 65118fa）**：
+
+- TC-002-01/02 ✅：多文件投放 + 白名单 `--check` 全过（CI provision 步骤）。TC-002-08 ✅ `--assets` 投放（8 farm 条目 + manifest.json）。
+- TC-002-14 ✅ 退出码契约（未投放=2 CI 断言步 + 本机复核）。TC-002-17 ✅ 断言语义修复（`bash -e` 下 2=过/1=拒，本机+CI 双验证）。
+- TC-002-18 ✅ workflow 静态审查 + 首跑通过（run 41573860213 success）。TC-002-19 ✅ 配置期门禁不回归（CI gradle tasks 步）。TC-002-20 ✅（CI 即本机预演等价；归档 tar.gz 167MB artifact 含四源包+脚本，本地下载核验进行中）。
+- 负例矩阵 TC-002-03~07/09~11/15/16 ⬜（需本地投放产物后构造，下一轮执行）。
+
+**CI 迭代修复史（2026-11-03，5 次运行）**：① Resolve version 在分支 push 误用分支名为版本号；② android-actions/setup-android action 自身失败 ⇒ 改 runner 预装 SDK + sdkmanager；③ CURL_LDFLAGS 缺 -lssl -lcrypto -lz ⇒ 链接失败；④ openssl API 未对齐 ⇒ ANDROID_API=$API；⑤ S8 argv 索引/chmod -R a-x 目录遍历位 ⇒ 修。终态全绿。

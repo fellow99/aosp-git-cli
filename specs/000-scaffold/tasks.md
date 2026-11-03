@@ -11,11 +11,4 @@
 - [x] T6 `.gitignore` / THIRD-PARTY（**GPLv2 对应源码义务**）/ README 中英 / docs/000
 - [x] T7 specs（三件套）
 - [x] T8 验证（assembleDebug + provision 退出码 + 语法门）+ 提交（父工程不提交）
-- [ ] T9 残留收口（2026-11-02 立项，规划 §10.2 模块 000 行）：
-      ① NC-1 定稿——`gates` 语义 =「门禁结论存档」，draft 初值全部改 `false`（未实测不当事实，C6），
-        lock 增加 `$comment` 说明；provision 维持不读取（每次解析产物为准）；
-      ② provision.mjs 兜底 allowedNeeded 对齐 lock（补 `liblog.so`，消除 STRUCTURE §5-3 漂移）；
-      ③ 残留清理：`gradle.properties` `VERSION_NAME`（无读取方）、provision.mjs `pairedRuntime`（pty 线残留）；
-      ④ 负例用例 TC-000-07~10 执行（依赖 001 产物，随 001/002 开发完成后跑）；
-      ⑤ 000-scaffold/plan.md §7 NC-1 关闭回写。
-      （②③ 代码变更归本模块；CI 退出码断言修复归 002 模块 M1-T6，不在 T9 内）
+- [x] T9 残留收口（2026-11-03 完成）：① lock `gates` 定稿落地（draft 初值全 false + $comment；首个真实构建 run 41573860213 过门禁后实测回写 true）；② provision 兜底白名单补 `liblog.so`；③ `VERSION_NAME`/`pairedRuntime` 残留清理；⑤ plan.md NC-1 关闭。（④ 负例用例待本地投放产物后执行）
