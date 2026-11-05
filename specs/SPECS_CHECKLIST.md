@@ -1,6 +1,6 @@
 # SPECS_CHECKLIST.md —— 规格文档完成度追踪
 
-> 工程：`aosp-git-cli` · 需求：**000-scaffold 工程搭建**
+> 工程：`aosp-git-cli` · 需求：**000-scaffold 工程搭建 + 101-probe-app 设备回程探针载体（本批 as-built）**
 > 规范文档存放目录：`specs/` · 生成日期：**2026-11-02**（specs-as-built 套件）
 > 权威规划文档：[`../docs/000-工程规划.md`](../docs/000-工程规划.md)（v2.0，**结论以它为准**）
 >
@@ -34,6 +34,7 @@
 | M-02 | 构建（building） | [`001-building/`](./001-building/) | ✅ | ✅ | ✅ | ✅ | ⬜ | 规划立项（M1-T1~T4）；fetch/交叉编译/helper 探明/assets 收集 |
 | M-03 | 构建流水线（building-workflow） | [`002-building-workflow/`](./002-building-workflow/) | ✅ | ✅ | ✅ | ✅ | ⬜ | 规划立项（M1-T5/T6）；provision 扩展 + CI + Release + lock 回写 |
 | M-04 | CLI 运行期验证（cli） | [`003-cli/`](./003-cli/) | ✅ | ✅ | ✅ | ✅ | ⬜ | 规划立项（M1-T7/M2-T2 shell 域等价）；主用例全集 TC-003-00~17 |
+| M-05 | 设备回程探针载体（probe-app） | [`101-probe-app/`](./101-probe-app/) | ✅ | ✅ | ✅ | ✅ | ✅ | specs-as-built（逆向 probe-app 现有实现）；2026-11-06 构建修齐：Release AAR 落位 + `:app:assembleDebug` ✅；设备实跑 ⬜（编排者排队）；git 修复项零（20261105 修复设计 §1/§7） |
 
 **模块纪律**：每个模块目录 `NNN-<name>/` 下 `spec.md`（需求与验收，成对必须）+ `plan.md`（实现方案，
 FR 交叉引用 + 真实行数）必备；复杂模块可追加 `tasks.md` / `test-cases.md`。
@@ -62,7 +63,7 @@ FR 交叉引用 + 真实行数）必备；复杂模块可追加 `tasks.md` / `te
 | `plan.md` 交叉引用本模块 `spec.md` 的 `FR-000-*` | ✅（§5 映射表） |
 | as-built 与 planned 逐条区分（⬜ + 「规划引用」标注） | ✅ |
 | README 链接全部指向存在的文件 | ✅（生成时逐链接校验） |
-| 模块数与 `NNN-*/` 实际目录数一致 | ✅（1/1） |
+| 模块数与 `NNN-*/` 实际目录数一致 | ✅（5/5） |
 | [NEEDS CLARIFICATION] ≤ 3 处/份 | ✅（仅 000-scaffold/plan.md 1 处 NC-1） |
 
 ---

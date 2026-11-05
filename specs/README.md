@@ -1,10 +1,10 @@
 # 规格文档索引 —— `aosp-git-cli`
 
 **项目名称：** `aosp-git-cli`（Maven 坐标 `io.github.fellow99:git-cli`）
-**需求：** **000-scaffold 工程搭建** · 规范文档存放目录：`specs/`
+**需求：** **000-scaffold 工程搭建 + 101-probe-app 设备回程探针载体（本批 as-built）** · 规范文档存放目录：`specs/`
 **库状态：** M0 骨架已完成（Gradle 骨架 + exec 门禁 provision + draft lock + 骨架脚本 + 配置期 CI）；git 本体尚未构建（M1 ⬜）
 **技术栈：** Gradle 9.4.1 + AGP 9.2.1 + vanniktech 0.37.0（`:git-cli` AAR 容器，零源码，useLegacyPackaging=true）+ 纯 Node exec 门禁（`tools/provision.mjs`）+ M1 四源（git/zlib/curl/openssl）静态交叉编译（规划）
-**文档生成时间：** 2026-11-02 · **最后更新：** 2026-11-02
+**文档生成时间：** 2026-11-02 · **最后更新：** 2026-11-06
 
 > **权威规划文档是 [`../docs/000-工程规划.md`](../docs/000-工程规划.md)（v2.0）。**
 > 本目录是它的**收敛/展开版（as-built）**：只做细化与验收，**不复制粘贴**，所有结论回引规划的 § 号
@@ -24,8 +24,9 @@
 | 模块 | 构建（`001-building`） | 4 | spec · plan · tasks · test-cases（FR-001-xxx；⬜ M1-T1~T4） |
 | 模块 | 构建流水线（`002-building-workflow`） | 4 | spec · plan · tasks · test-cases（FR-002-xxx；⬜ M1-T5/T6） |
 | 模块 | CLI 运行期验证（`003-cli`） | 4 | spec · plan · tasks · test-cases（FR-003-xxx；⬜ M1-T7/M2；**主用例全集 TC-003-00~17**） |
+| 模块 | 设备回程探针载体（`101-probe-app`） | 4 | spec · plan · tasks · test-cases（FR-101-PROBE-xxx；✅ as-built；AAR 落位 + `assembleDebug` ✅ 2026-11-06） |
 | 索引 | 本索引 | 1 | `README.md` |
-| **合计** | **4 目录 / 21 文件** | | 模块目录 4 个，模块文档 16 份 |
+| **合计** | **5 目录 / 25 文件** | | 模块目录 5 个，模块文档 20 份 |
 
 > **刻意不生成** `API.md` / `overall-api.md`：本仓**不含任何嵌入 API**——只有原生二进制与随包数据的
 > 可复现构建、ELF 门禁与发布流水线。对外契约面 = Maven 坐标 + 运行期 env 注入契约（规划 §7.1，
@@ -106,6 +107,18 @@
 | 任务拆解 | [003-cli/tasks.md](./003-cli/tasks.md) | T1–T10 |
 | 测试用例 | [003-cli/test-cases.md](./003-cli/test-cases.md) | **TC-003-00~17 主用例全集**（A 环境自检/B 版本/C 本地链/D https/E 限制） |
 
+### 101-probe-app — 设备回程探针载体（✅ as-built，2026-11-06 构建修齐）
+
+> 独立 Android 探针载体：消费 CI 产物 AAR，物化 assets + helper 农场 + env 注入（规划 §7.1），
+> 逐条执行 003 主用例可执行子集（TC-003-01…19 + App 域 18a/18b/05b/08b）并出 JSON 报告。
+> 设备实跑 ⬜（编排者排队）；git 修复项零（20261105 修复设计 §1/§7）。
+
+| 文档 | 链接 | 说明 |
+|---|---|---|
+| 功能规格 | [101-probe-app/spec.md](./101-probe-app/spec.md) | FR-101-PROBE-001~011（装载/注入/执行/判据/报告/无头/SKIP 口径） |
+| 技术方案 | [101-probe-app/plan.md](./101-probe-app/plan.md) | as-built：真实行数、AAR 获取与 lock 校验、不一致登记、FR 交叉引用 |
+| 任务拆解 | [101-probe-app/tasks.md](./101-probe-app/tasks.md) | T1 建仓 ✅ / T2 正典映射与首跑 ✅ / T3 构建修齐 ✅ / T4 遗留执行项 |
+| 测试用例 | [101-probe-app/test-cases.md](./101-probe-app/test-cases.md) | 27 判据点（26 条 + TC-003-17）+ 端点 extras SKIP 口径 + host 侧用例 |
 ---
 
 ## 四、模块编号一览（注册于规划 §10.2，2026-11-02）
@@ -116,9 +129,12 @@
 | 001 | 构建（源钉选 + 交叉编译） | [`001-building/`](./001-building/) | ⬜ 立项 | 规划 §10 M1-T1~T4 |
 | 002 | 构建流水线（门禁扩展 + CI + 发布） | [`002-building-workflow/`](./002-building-workflow/) | ⬜ 立项 | 规划 §10 M1-T5/T6 |
 | 003 | CLI 运行期验证 | [`003-cli/`](./003-cli/) | ⬜ 立项 | 规划 §10 M1-T7 + M2-T2（shell 域等价） |
-
+| 101 | 设备回程探针载体（probe-app） | [`101-probe-app/`](./101-probe-app/) | ✅ as-built（构建 ✅；设备实跑 ⬜ 编排者排队） | 本批 specs/101-probe-app（101 编号段沿用系约定，见下注）+ 规划 §10 M1-T7 / M2-T1 |
 > 编号分配须**先写进规划 §10.2 再建目录**（C8）；FR 族 = `FR-<模块号>-xxx`。
-
+> **101 编号段**：沿用 node/python/uv/pnpm 各仓「设备侧探针 / 集成模块」编号段约定（其 000-003
+> 外的 101 模块：node 为 101-npm-integration + 101-probe-app，python/uv/pnpm 为 101-probe-app）；
+> git-cli 首个 101 模块 = **101-probe-app**（无 101-*-integration）。规划 §10.2 编号登记表本次未
+> 改动（C8 后续如需，由 003/101 收口时一并回写规划）。
 ---
 
 ## 五、模块文档结构规范
