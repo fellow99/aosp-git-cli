@@ -293,7 +293,21 @@ BASIC_CFLAGS += -DPTHREAD_CANCEL_DISABLE=0 '-Dpthread_setcancelstate(state,oldst
 NO_INSTALL_HARDLINKS = YesPlease
 NO_CROSS_DIRECTORY_HARDLINKS = YesPlease
 INSTALL_SYMLINKS = YesPlease
-V = 1
+NO_GITWEB = YesPlease
+  # ── SHELL_PATH（20261106 UAT 修复，git-cli#TC-003-06）────────────────────────
+  # Android 无 /bin/sh（仅 /system/bin/sh，mksh）；git 默认 SHELL_PATH=/bin/sh，
+  # git 内部 use_shell spawn（git_connect 本地协议 /bin/sh -c 'git-upload-pack …'）
+  # 会 exec ENOENT。修复：运行期 C 宏 SHELL_PATH 指向 /system/bin/sh。
+  # 注意 git Makefile 的 SHELL_PATH 变量同时是【构建期】shell（GEN 规则直接
+  # `$(SHELL_PATH) ./tools/generate-*.sh` 执行），交叉编译宿主无 /system/bin/sh，
+  # 不能改 make 变量；用 target-specific 编译宏只对引用该宏的 .o 注入运行期路径，
+  # make 的 $(SHELL_PATH) 保持宿主可用（默认 /bin/sh，git-bash 存在）。
+  # 写 `//system/bin/sh`（双斜杠）：git-bash(MSYS2) 会把 /system/bin/sh 参数转换
+  # 成 C:/Program Files/Git/system/bin/sh（真机 trace 实锤），双斜杠豁免转换；
+  # bionic/linker 按单斜杠等价解析（真机 run-as 已验证 //system/bin/sh exec OK）。
+  run-command.o help.o builtin/help.o builtin/var.o: BASIC_CFLAGS += -DSHELL_PATH='"//system/bin/sh"'
+  # 引用 SHELL_PATH 的 TU：run-command/help/builtin-help/builtin-var（git 2.56 源码 grep）。
+  V = 1
 EOF
   say "✔ config.mak 写入 $GITDIR/config.mak（autoconf 路线省略：缺 autoconf 时 config.mak 直写为 Termux 同款主路线）"
 fi
@@ -425,5 +439,21 @@ if [[ ! "$STAGE" < "S9" ]]; then
     echo "# helper inventory (S6, pre-rename) — see helper-inventory.json"
   } > "$OUT/BUILD-METADATA.txt"
   say "✔ BUILD-METADATA.txt 落盘"
+  # ── SHELL_PATH 门禁（git-cli#TC-003-06 修复防回归；20261106 UAT）──────────
+  # Android 无 /bin/sh：产物必须内置 //system/bin/sh（SHELL_PATH 编译期常量，双斜杠豁免 MSYS2 转换）。
+  # 以 `strings` 等价检查 .rodata 中的路径常量。windows 无 strings 时退回 grep -a。
+  shellhit=""
+  if command -v strings >/dev/null 2>&1; then
+    shellhit="$(strings "$OUT/jni/libgit_cli.so" | grep -c '^//system/bin/sh$' || true)"
+  else
+    shellhit="$(grep -ao '//system/bin/sh' "$OUT/jni/libgit_cli.so" | wc -l)"
+  fi
+  # 反向门禁：SHELL_PATH MSYS2 路径转换污染（C:/Program Files/Git/system/bin/sh）必须缺席
+  # （20261106 真机 GIT_TRACE 实锤）。注意只匹配 SHELL_PATH 污染；ETC_GITCONFIG 等
+  # /usr 前缀宏也含 Program Files，但 Android 上系统配置路径不可达、无功能影响，不在本门禁。
+  if grep -aq "Program Files/Git/system/bin/sh" "$OUT/jni/libgit_cli.so"; then
+    die "SHELL_PATH 门禁：libgit_cli.so 含 MSYS2 污染路径（Git/system/bin/sh）—— 双斜杠豁免失效？"
+  fi
+  say "✔ SHELL_PATH 门禁：//system/bin/sh 已内嵌且无 MSYS2 污染（原始串 $shellhit）"
   say "完成：$OUT/jni/*.so + assets/ + METADATA（下一步：node tools/provision.mjs --inspect <so> 逐个过门禁）"
 fi

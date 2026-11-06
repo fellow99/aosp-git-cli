@@ -10,8 +10,8 @@
       "abi": "arm64-v8a",
       "androidApi": 24,
       "name": "libgit_cli.so",
-      "size": 3993328,
-      "sha256": "171716839caf1f2c4767c28792b9abb4cf79a6d71cc4155aa1f53cbc81ae8bab",
+      "size": 3993600,
+      "sha256": "dab8fb02fd3fbba67e332384900165188d9f7413b991b8fca690524973b4f0c9",
       "builtFrom": {
         "source": {
           "version": "2.56.0",
@@ -38,7 +38,7 @@
         },
         "assets": "git templates (source tree) + cacert.pem 2026-10-20 (sha256 796f1389bfea13c0ed78f663b765baaff54a508e5483786bd6ece73c5e3e3cbe) + gitexec-manifest.json",
         "ndk": "28.2.13676358 (r28c; GitHub ubuntu-24.04 runner prebuilt SDK)",
-        "flags": "-Wl,-z,max-page-size=16384; llvm-strip --strip-unneeded; NO_RUST/NO_EXPAT/CSPRNG=DEFAULT (bionic compat)",
+        "flags": "-Wl,-z,max-page-size=16384; llvm-strip --strip-unneeded; NO_RUST/NO_EXPAT/CSPRNG=DEFAULT; NO_GITWEB; SHELL_PATH=//system/bin/sh (20261106 UAT fix TC-003-06, MSYS2-safe)",
         "helpers": {
           "libgit_remote_curl.so": {
             "farm": [
@@ -47,8 +47,8 @@
               "git-remote-ftp",
               "git-remote-ftps"
             ],
-            "sha256": "b2d7a0a6b489e8f2ebdc13b3c2740fd53af56a4618b649c3c084c65d2b1def41",
-            "size": 8450536
+            "sha256": "2393b682f3a429f7b490fe4842f1af50be2b36cbb52c2e89c0629a75c1bffc3f",
+            "size": 8450688
           }
         },
         "helperTrimmed": [
