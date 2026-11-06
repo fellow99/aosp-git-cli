@@ -405,7 +405,8 @@ public class MainActivity extends Activity {
                         " git -C " + ws + " ls-remote " + credUrl + " >/dev/null 2>&1; RC=$?;" +
                         " mv .b1 git-remote-http && mv .b2 git-remote-https && echo RESTORED && echo RC=$RC"),
                 null, null, 90_000,
-                o -> o.exit != 0 ? "FAIL(自治脚本未完成还原) " + head(sanitize(o.stdout + o.stderr), 200)
+                o -> authUrl == null ? "SKIP:未提供 authUrl/凭证 extras——farm 缺失对照需可连 https 端点（同 TC-003-19a 口径）"
+                        : o.exit != 0 ? "FAIL(自治脚本未完成还原) " + head(sanitize(o.stdout + o.stderr), 200)
                         : !o.stdout.contains("RESTORED") ? "FAIL(未还原) " + head(sanitize(o.stdout), 200)
                         : o.stdout.contains("RC=0") ? "意外成功（farm 缺失应失败）"
                         : o.stdout.contains("RC=128") || o.stdout.contains("RC=1") ? null
